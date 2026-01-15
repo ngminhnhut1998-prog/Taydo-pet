@@ -67,10 +67,13 @@ export function RevenueChart({ mode, year, month }: RevenueChartProps) {
         }
 
         if (mode === 'yearly') {
-            const currentYear = getYear(new Date());
-            const years = [currentYear - 2, currentYear - 1, currentYear];
+            const allYears = [...new Set(records.map(r => getYear(new Date(r.ngay_kham))))].sort();
+
+            if (allYears.length === 0) {
+                return [];
+            }
             
-            return years.map(y => {
+            return allYears.map(y => {
                 const yearStart = startOfYear(new Date(y, 0));
                 const yearEnd = endOfYear(new Date(y, 0));
                  const yearlyTotal = records

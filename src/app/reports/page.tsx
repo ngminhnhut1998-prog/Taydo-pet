@@ -82,7 +82,7 @@ export default function ReportsPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Doanh thu theo năm</CardTitle>
-                            <CardDescription>Biểu đồ doanh thu trong 3 năm gần nhất.</CardDescription>
+                            <CardDescription>Biểu đồ doanh thu của tất cả các năm có dữ liệu.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <RevenueChart mode="yearly" />
