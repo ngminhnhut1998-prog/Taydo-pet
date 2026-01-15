@@ -37,6 +37,9 @@ export const mockRecords: MedicalRecord[] = [
         ghi_chu: 'Tái khám nếu triệu chứng không giảm',
         nhac_hen: startOfDay(now).toISOString(), // Hôm nay
         noi_dung_hen: 'Tái khám da',
+        chi_phi_chan_doan: 150000,
+        chi_phi_don_thuoc: 150000,
+        chi_phi_ban_kem: 50000,
         chi_phi: 350000,
     },
     { 
@@ -51,6 +54,9 @@ export const mockRecords: MedicalRecord[] = [
         ghi_chu: 'Theo dõi phản ứng sau tiêm',
         nhac_hen: null,
         noi_dung_hen: '',
+        chi_phi_chan_doan: 100000,
+        chi_phi_don_thuoc: 50000,
+        chi_phi_ban_kem: 50000,
         chi_phi: 200000
     },
     // Records for Vàng (Mèo, cust_1)
@@ -66,6 +72,9 @@ export const mockRecords: MedicalRecord[] = [
         ghi_chu: 'Vệ sinh tai hàng ngày',
         nhac_hen: null,
         noi_dung_hen: '',
+        chi_phi_chan_doan: 150000,
+        chi_phi_don_thuoc: 150000,
+        chi_phi_ban_kem: 0,
         chi_phi: 300000,
     },
     // Records for Lu (Chó, cust_2)
@@ -81,6 +90,9 @@ export const mockRecords: MedicalRecord[] = [
         ghi_chu: 'Hẹn tái khám tiêm nhắc lại sau 1 năm',
         nhac_hen: startOfDay(addDays(now, 30)).toISOString(),
         noi_dung_hen: 'Tiêm nhắc lại vắc-xin',
+        chi_phi_chan_doan: 150000,
+        chi_phi_don_thuoc: 300000,
+        chi_phi_ban_kem: 300000,
         chi_phi: 750000,
     },
      // Records for MiMi (Mèo, cust_3)
@@ -96,6 +108,9 @@ export const mockRecords: MedicalRecord[] = [
         ghi_chu: 'Giữ ấm, cho ăn thức ăn mềm',
         nhac_hen: startOfDay(now).toISOString(), // Hôm nay
         noi_dung_hen: 'Tái khám hô hấp',
+        chi_phi_chan_doan: 100000,
+        chi_phi_don_thuoc: 150000,
+        chi_phi_ban_kem: 0,
         chi_phi: 250000,
     },
     // Records for Rex (Chó, cust_4)
@@ -111,6 +126,9 @@ export const mockRecords: MedicalRecord[] = [
         ghi_chu: 'Theo dõi tình trạng, cho uống nhiều nước',
         nhac_hen: startOfDay(addDays(now, 1)).toISOString(), // Ngày mai
         noi_dung_hen: 'Tái khám tiêu hóa',
+        chi_phi_chan_doan: 200000,
+        chi_phi_don_thuoc: 150000,
+        chi_phi_ban_kem: 100000,
         chi_phi: 450000,
     },
 ];

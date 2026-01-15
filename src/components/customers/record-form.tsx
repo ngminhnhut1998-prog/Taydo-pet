@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Plus } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, startOfDay } from 'date-fns';
@@ -25,8 +25,11 @@ const formSchema = z.object({
   can_nang_kham: z.coerce.number().positive({ message: "Cân nặng phải là số dương."}).optional(),
   trieu_chung: z.string().optional(),
   chan_doan: z.string().min(2, { message: "Chẩn đoán không được để trống." }),
+  chi_phi_chan_doan: z.coerce.number().min(0).optional(),
   don_thuoc: z.string().min(2, { message: "Đơn thuốc không được để trống." }),
+  chi_phi_don_thuoc: z.coerce.number().min(0).optional(),
   ban_kem: z.string().optional(),
+  chi_phi_ban_kem: z.coerce.number().min(0).optional(),
   ghi_chu: z.string().optional(),
   nhac_hen: z.string().optional().nullable(),
   noi_dung_hen: z.string().optional(),
@@ -49,14 +52,26 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
       can_nang_kham: undefined,
       trieu_chung: "",
       chan_doan: "",
+      chi_phi_chan_doan: 0,
       don_thuoc: "",
+      chi_phi_don_thuoc: 0,
       ban_kem: "",
+      chi_phi_ban_kem: 0,
       ghi_chu: "",
       nhac_hen: "",
       noi_dung_hen: "",
-      chi_phi: undefined,
+      chi_phi: 0,
     },
   });
+
+  const costDiagnosis = form.watch('chi_phi_chan_doan');
+  const costPrescription = form.watch('chi_phi_don_thuoc');
+  const costProducts = form.watch('chi_phi_ban_kem');
+
+  useEffect(() => {
+    const total = (costDiagnosis || 0) + (costPrescription || 0) + (costProducts || 0);
+    form.setValue('chi_phi', total);
+  }, [costDiagnosis, costPrescription, costProducts, form]);
 
   useEffect(() => {
     if (existingRecord) {
@@ -69,6 +84,9 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
         trieu_chung: existingRecord.trieu_chung ?? "",
         ban_kem: existingRecord.ban_kem ?? "",
         ghi_chu: existingRecord.ghi_chu ?? "",
+        chi_phi_chan_doan: existingRecord.chi_phi_chan_doan ?? 0,
+        chi_phi_don_thuoc: existingRecord.chi_phi_don_thuoc ?? 0,
+        chi_phi_ban_kem: existingRecord.chi_phi_ban_kem ?? 0,
         chi_phi: existingRecord.chi_phi ?? undefined,
       });
     } else {
@@ -77,12 +95,15 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
             can_nang_kham: undefined,
             trieu_chung: "",
             chan_doan: "",
+            chi_phi_chan_doan: 0,
             don_thuoc: "",
+            chi_phi_don_thuoc: 0,
             ban_kem: "",
+            chi_phi_ban_kem: 0,
             ghi_chu: "",
             nhac_hen: "",
             noi_dung_hen: "",
-            chi_phi: undefined,
+            chi_phi: 0,
         });
     }
   }, [existingRecord, form, isOpen]);
@@ -109,9 +130,11 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
     }
   }
 
+  const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{existingRecord ? 'Sửa bệnh án' : 'Thêm bệnh án mới'}</DialogTitle>
            <DialogDescription>
@@ -190,45 +213,93 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="chan_doan"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Chẩn đoán</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Viêm da dị ứng..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="don_thuoc"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Đơn thuốc</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Thuốc A: 2 viên/ngày..." rows={3} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="ban_kem"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Sản phẩm/dịch vụ bán kèm</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Vòng cổ chống ve, Sữa tắm..." rows={2} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+            <div className="flex items-start gap-4">
+                <FormField
+                control={form.control}
+                name="chan_doan"
+                render={({ field }) => (
+                    <FormItem className='flex-1'>
+                    <FormLabel>Chẩn đoán</FormLabel>
+                    <FormControl>
+                        <Textarea placeholder="Viêm da dị ứng..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                    control={form.control}
+                    name="chi_phi_chan_doan"
+                    render={({ field }) => (
+                    <FormItem className='w-36'>
+                        <FormLabel>Phí khám</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="150000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+            
+            <div className="flex items-start gap-4">
+                <FormField
+                control={form.control}
+                name="don_thuoc"
+                render={({ field }) => (
+                    <FormItem className='flex-1'>
+                    <FormLabel>Đơn thuốc</FormLabel>
+                    <FormControl>
+                        <Textarea placeholder="Thuốc A: 2 viên/ngày..." rows={3} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="chi_phi_don_thuoc"
+                    render={({ field }) => (
+                    <FormItem className='w-36'>
+                        <FormLabel>Tiền thuốc</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="200000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+
+            <div className="flex items-start gap-4">
+                <FormField
+                control={form.control}
+                name="ban_kem"
+                render={({ field }) => (
+                    <FormItem className='flex-1'>
+                    <FormLabel>Sản phẩm/dịch vụ bán kèm</FormLabel>
+                    <FormControl>
+                        <Textarea placeholder="Vòng cổ chống ve, Sữa tắm..." rows={2} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                    control={form.control}
+                    name="chi_phi_ban_kem"
+                    render={({ field }) => (
+                    <FormItem className='w-36'>
+                        <FormLabel>Phí bán kèm</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="0" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
              <FormField
               control={form.control}
               name="ghi_chu"
@@ -282,9 +353,12 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
                 name="chi_phi"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Chi phí (VND)</FormLabel>
+                    <FormLabel>Tổng chi phí (VND)</FormLabel>
                     <FormControl>
-                    <Input type="number" placeholder="350000" {...field} />
+                      <div className="relative">
+                        <Input type="number" placeholder="350000" {...field} readOnly className="pr-24 bg-muted/50 font-bold text-base"/>
+                        <span className='absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground'>{currencyFormatter.format(field.value || 0)}</span>
+                      </div>
                     </FormControl>
                     <FormMessage />
                 </FormItem>
