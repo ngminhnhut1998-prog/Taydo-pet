@@ -2,9 +2,8 @@
 "use client"
 
 import { RevenueChart } from "@/components/reports/revenue-chart";
-import { ServicesChart } from "@/components/reports/services-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileDown, Filter } from "lucide-react";
+import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DateRangePicker } from "@/components/reports/date-range-picker";
@@ -35,70 +34,37 @@ export default function ReportsPage() {
                     <div className="flex items-center justify-start">
                         <DateRangePicker />
                     </div>
-                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Doanh thu theo ngày</CardTitle>
-                                <CardDescription>Biểu đồ doanh thu trong khoảng thời gian đã chọn.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <RevenueChart />
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Dịch vụ sử dụng</CardTitle>
-                                <CardDescription>Tỷ lệ dịch vụ trong khoảng thời gian đã chọn.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ServicesChart />
-                            </CardContent>
-                        </Card>
-                    </div>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Doanh thu theo ngày</CardTitle>
+                            <CardDescription>Biểu đồ doanh thu trong khoảng thời gian đã chọn.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <RevenueChart />
+                        </CardContent>
+                    </Card>
                 </TabsContent>
                  <TabsContent value="month" className="space-y-4">
-                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Doanh thu theo tháng</CardTitle>
-                                <CardDescription>Biểu đồ doanh thu trong 6 tháng gần nhất.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <RevenueChart />
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Dịch vụ sử dụng</CardTitle>
-                                <CardDescription>Tỷ lệ dịch vụ được sử dụng trong tháng.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ServicesChart />
-                            </CardContent>
-                        </Card>
-                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Doanh thu theo tháng</CardTitle>
+                            <CardDescription>Biểu đồ doanh thu trong 6 tháng gần nhất.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <RevenueChart />
+                        </CardContent>
+                    </Card>
                 </TabsContent>
                  <TabsContent value="year" className="space-y-4">
-                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Doanh thu theo năm</CardTitle>
-                                <CardDescription>Biểu đồ doanh thu trong 3 năm gần nhất.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <RevenueChart />
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Dịch vụ sử dụng</CardTitle>
-                                <CardDescription>Tỷ lệ dịch vụ được sử dụng trong năm.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ServicesChart />
-                            </CardContent>
-                        </Card>
-                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Doanh thu theo năm</CardTitle>
+                            <CardDescription>Biểu đồ doanh thu trong 3 năm gần nhất.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <RevenueChart />
+                        </CardContent>
+                    </Card>
                 </TabsContent>
             </Tabs>
         </div>
