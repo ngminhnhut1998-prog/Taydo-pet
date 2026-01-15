@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { format, startOfDay } from 'date-fns';
 import { recordApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import type { MedicalRecord } from '@/lib/db';
+import { db, type MedicalRecord } from '@/lib/db';
 import { useEffect } from 'react';
 import { Input } from '../ui/input';
 
@@ -109,6 +109,37 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
   }, [existingRecord, form, isOpen]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    const isCreatingNewAppointment = values.nhac_hen && (!existingRecord || existingRecord.nhac_hen !== values.nhac_hen);
+
+    if (isCreatingNewAppointment) {
+        const pet = await db.pets.get(petId);
+        if (pet) {
+            const customerId = pet.khach_hang_id;
+            const customerPets = await db.pets.where('khach_hang_id').equals(customerId).toArray();
+            const customerPetIds = customerPets.map(p => p.id);
+
+            const futureAppointments = await db.records
+                .where('thu_id').anyOf(customerPetIds)
+                .and(record => !!record.nhac_hen && new Date(record.nhac_hen) >= startOfDay(new Date()))
+                .toArray();
+            
+            // Exclude the current record if we are editing it
+            const otherAppointments = existingRecord 
+                ? futureAppointments.filter(r => r.id !== existingRecord.id) 
+                : futureAppointments;
+
+            if (otherAppointments.length >= 3) {
+                toast({
+                    title: "Lỗi tạo lịch hẹn",
+                    description: "Khách hàng đã đạt đến giới hạn tối đa (3) lịch hẹn trong tương lai.",
+                    variant: "destructive",
+                });
+                return;
+            }
+        }
+    }
+
+
     const dataToSave = {
         ...values,
         ngay_kham: values.ngay_kham.toISOString(),
