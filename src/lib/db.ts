@@ -23,6 +23,11 @@ export interface Pet {
   updated?: string;
 }
 
+export interface Appointment {
+  ngay: string;
+  noi_dung: string;
+}
+
 export interface MedicalRecord {
   id: string;
   ngay_kham: string;
@@ -32,8 +37,7 @@ export interface MedicalRecord {
   don_thuoc: string;
   ban_kem?: string;
   ghi_chu?: string;
-  nhac_hen?: string | null;
-  noi_dung_hen?: string;
+  nhac_hen?: Appointment[];
   chi_phi?: number;
   chi_phi_chan_doan?: number;
   chi_phi_don_thuoc?: number;
@@ -60,6 +64,25 @@ class VetClinicDB extends Dexie {
 
   constructor() {
     super('VetClinicDB');
+    this.version(7).stores({
+      customers: 'id, ten, so_dien_thoai',
+      pets: 'id, ten, khach_hang_id',
+      records: 'id, thu_id, ngay_kham, *nhac_hen.ngay',
+      syncQueue: '++id, timestamp',
+    }).upgrade(tx => {
+        console.log("Upgrading database to version 7");
+        // This is a complex migration. For mock data, it's easier to just re-seed.
+        // In a real app, you would carefully transform the data.
+        return tx.table('records').toCollection().modify(record => {
+            if (record.nhac_hen && typeof record.nhac_hen === 'string') {
+                record.nhac_hen = [{ ngay: record.nhac_hen, noi_dung: record.noi_dung_hen || 'Kiểm tra lại' }];
+            } else if (!Array.isArray(record.nhac_hen)) {
+                record.nhac_hen = [];
+            }
+            delete record.noi_dung_hen;
+        });
+    });
+    
     this.version(6).stores({
       customers: 'id, ten, so_dien_thoai',
       pets: 'id, ten, khach_hang_id',

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format, startOfDay } from 'date-fns';
-import { db, type MedicalRecord, type Pet, type Customer } from '@/lib/db';
+import { db, type MedicalRecord, type Pet, type Customer, type Appointment } from '@/lib/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { Badge } from '../ui/badge';
 
 interface FullAppointmentInfo {
   record: MedicalRecord;
+  appointment: Appointment;
   pet: Pet | undefined;
   customer: Customer | undefined;
 }
@@ -25,28 +26,42 @@ export default function AppointmentClientPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   const appointments = useLiveQuery(async () => {
-    let recordsQuery = db.records.filter(r => !!r.nhac_hen);
+    let query = db.records.where('nhac_hen.ngay').above('');
 
-    if(dateRange?.from){
-        const fromDate = startOfDay(dateRange.from).toISOString();
-        recordsQuery = recordsQuery.filter(r => r.nhac_hen! >= fromDate);
+    if (dateRange?.from) {
+      const fromDate = startOfDay(dateRange.from).toISOString();
+      query = query.and(r => (r.nhac_hen || []).some(h => h.ngay >= fromDate));
     }
-    if(dateRange?.to){
-        // Add 1 day to include the end date fully
-        const toDate = new Date(startOfDay(dateRange.to).getTime() + 24 * 60 * 60 * 1000).toISOString();
-        recordsQuery = recordsQuery.filter(r => r.nhac_hen! < toDate);
+    if (dateRange?.to) {
+      const toDate = new Date(startOfDay(dateRange.to).getTime() + 24 * 60 * 60 * 1000).toISOString();
+      query = query.and(r => (r.nhac_hen || []).some(h => h.ngay < toDate));
     }
+    
+    const records = await query.toArray();
 
-    const records = await recordsQuery.sortBy('nhac_hen');
+    let allAppointments: FullAppointmentInfo[] = [];
 
-    const fullInfo: FullAppointmentInfo[] = await Promise.all(
-      records.map(async (record) => {
-        const pet = await db.pets.get(record.thu_id);
-        const customer = pet ? await db.customers.get(pet.khach_hang_id) : undefined;
-        return { record, pet, customer };
-      })
-    );
-    return fullInfo;
+    for (const record of records) {
+        if (record.nhac_hen) {
+            for (const app of record.nhac_hen) {
+                 // Filter appointments within the date range again, as the query is on record level
+                const appDate = new Date(app.ngay);
+                if (
+                    (!dateRange?.from || appDate >= startOfDay(dateRange.from)) &&
+                    (!dateRange?.to || appDate < startOfDay(dateRange.to).getTime() + 24 * 60 * 60 * 1000)
+                ) {
+                    const pet = await db.pets.get(record.thu_id);
+                    const customer = pet ? await db.customers.get(pet.khach_hang_id) : undefined;
+                    allAppointments.push({ record, appointment: app, pet, customer });
+                }
+            }
+        }
+    }
+    
+    // Sort by date
+    allAppointments.sort((a, b) => new Date(a.appointment.ngay).getTime() - new Date(b.appointment.ngay).getTime());
+
+    return allAppointments;
   }, [dateRange]);
 
   return (
@@ -111,10 +126,10 @@ export default function AppointmentClientPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {appointments.map(({ record, pet, customer }) => (
-                <TableRow key={record.id}>
+              {appointments.map(({ record, appointment, pet, customer }, index) => (
+                <TableRow key={`${record.id}-${index}`}>
                   <TableCell>
-                      <Badge variant="secondary">{record.nhac_hen ? format(new Date(record.nhac_hen), 'dd/MM/yyyy') : ''}</Badge>
+                      <Badge variant="secondary">{format(new Date(appointment.ngay), 'dd/MM/yyyy')}</Badge>
                   </TableCell>
                   <TableCell>
                       <div className="flex items-center gap-3">
@@ -127,7 +142,7 @@ export default function AppointmentClientPage() {
                   </TableCell>
                   <TableCell>{pet?.ten || 'Không rõ'}</TableCell>
                   <TableCell className="text-muted-foreground">{customer?.so_dien_thoai || ''}</TableCell>
-                  <TableCell className="text-muted-foreground">{record.noi_dung_hen}</TableCell>
+                  <TableCell className="text-muted-foreground">{appointment.noi_dung}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

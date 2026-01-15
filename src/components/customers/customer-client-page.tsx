@@ -102,10 +102,14 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
                                         <TableCell className="text-muted-foreground max-w-xs">{record.ban_kem}</TableCell>
                                         <TableCell className="text-muted-foreground max-w-xs">{record.ghi_chu}</TableCell>
                                         <TableCell>
-                                            {record.nhac_hen ? (
-                                                <div className='flex flex-col'>
-                                                    <Badge variant="secondary">{format(new Date(record.nhac_hen), 'dd/MM/yyyy')}</Badge>
-                                                    <span className='text-xs text-muted-foreground mt-1'>{record.noi_dung_hen}</span>
+                                            {record.nhac_hen && record.nhac_hen.length > 0 ? (
+                                                <div className='flex flex-col gap-2'>
+                                                    {record.nhac_hen.map((hen, index) => (
+                                                        <div key={index}>
+                                                            <Badge variant="secondary">{format(new Date(hen.ngay), 'dd/MM/yyyy')}</Badge>
+                                                            <p className='text-xs text-muted-foreground mt-1'>{hen.noi_dung}</p>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             ) : '-'}
                                         </TableCell>

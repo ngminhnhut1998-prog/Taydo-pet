@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Plus } from 'lucide-react';
+import { CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, startOfDay } from 'date-fns';
@@ -17,6 +17,11 @@ import { useToast } from '@/hooks/use-toast';
 import { db, type MedicalRecord } from '@/lib/db';
 import { useEffect } from 'react';
 import { Input } from '../ui/input';
+
+const appointmentSchema = z.object({
+  ngay: z.string().min(1, "Ngày hẹn là bắt buộc"),
+  noi_dung: z.string().min(1, "Nội dung hẹn là bắt buộc"),
+});
 
 const formSchema = z.object({
   ngay_kham: z.date({
@@ -31,8 +36,7 @@ const formSchema = z.object({
   ban_kem: z.string().optional(),
   chi_phi_ban_kem: z.coerce.number().min(0).optional(),
   ghi_chu: z.string().optional(),
-  nhac_hen: z.string().optional().nullable(),
-  noi_dung_hen: z.string().optional(),
+  nhac_hen: z.array(appointmentSchema).optional(),
   chi_phi: z.coerce.number().min(0, { message: "Chi phí không được là số âm." }).optional(),
 });
 
@@ -58,10 +62,14 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
       ban_kem: "",
       chi_phi_ban_kem: 0,
       ghi_chu: "",
-      nhac_hen: "",
-      noi_dung_hen: "",
+      nhac_hen: [],
       chi_phi: 0,
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "nhac_hen",
   });
 
   const costDiagnosis = form.watch('chi_phi_chan_doan');
@@ -74,76 +82,51 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
   }, [costDiagnosis, costPrescription, costProducts, form]);
 
   useEffect(() => {
-    if (existingRecord) {
-      form.reset({
-        ...existingRecord,
-        ngay_kham: new Date(existingRecord.ngay_kham),
-        nhac_hen: existingRecord.nhac_hen ? format(new Date(existingRecord.nhac_hen), "yyyy-MM-dd") : "",
-        noi_dung_hen: existingRecord.noi_dung_hen ?? "",
-        can_nang_kham: existingRecord.can_nang_kham ?? undefined,
-        trieu_chung: existingRecord.trieu_chung ?? "",
-        ban_kem: existingRecord.ban_kem ?? "",
-        ghi_chu: existingRecord.ghi_chu ?? "",
-        chi_phi_chan_doan: existingRecord.chi_phi_chan_doan ?? 0,
-        chi_phi_don_thuoc: existingRecord.chi_phi_don_thuoc ?? 0,
-        chi_phi_ban_kem: existingRecord.chi_phi_ban_kem ?? 0,
-        chi_phi: existingRecord.chi_phi ?? undefined,
-      });
-    } else {
+    if (isOpen) {
+      if (existingRecord) {
         form.reset({
-            ngay_kham: new Date(),
-            can_nang_kham: undefined,
-            trieu_chung: "",
-            chan_doan: "",
-            chi_phi_chan_doan: 0,
-            don_thuoc: "",
-            chi_phi_don_thuoc: 0,
-            ban_kem: "",
-            chi_phi_ban_kem: 0,
-            ghi_chu: "",
-            nhac_hen: "",
-            noi_dung_hen: "",
-            chi_phi: 0,
+          ...existingRecord,
+          ngay_kham: new Date(existingRecord.ngay_kham),
+          nhac_hen: (existingRecord.nhac_hen || []).map(h => ({
+            ngay: h.ngay ? format(new Date(h.ngay), "yyyy-MM-dd") : "",
+            noi_dung: h.noi_dung,
+          })),
+          can_nang_kham: existingRecord.can_nang_kham ?? undefined,
+          trieu_chung: existingRecord.trieu_chung ?? "",
+          ban_kem: existingRecord.ban_kem ?? "",
+          ghi_chu: existingRecord.ghi_chu ?? "",
+          chi_phi_chan_doan: existingRecord.chi_phi_chan_doan ?? 0,
+          chi_phi_don_thuoc: existingRecord.chi_phi_don_thuoc ?? 0,
+          chi_phi_ban_kem: existingRecord.chi_phi_ban_kem ?? 0,
+          chi_phi: existingRecord.chi_phi ?? undefined,
         });
+      } else {
+          form.reset({
+              ngay_kham: new Date(),
+              can_nang_kham: undefined,
+              trieu_chung: "",
+              chan_doan: "",
+              chi_phi_chan_doan: 0,
+              don_thuoc: "",
+              chi_phi_don_thuoc: 0,
+              ban_kem: "",
+              chi_phi_ban_kem: 0,
+              ghi_chu: "",
+              nhac_hen: [],
+              chi_phi: 0,
+          });
+      }
     }
   }, [existingRecord, form, isOpen]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const isCreatingNewAppointment = values.nhac_hen && (!existingRecord || existingRecord.nhac_hen !== values.nhac_hen);
-
-    if (isCreatingNewAppointment) {
-        const pet = await db.pets.get(petId);
-        if (pet) {
-            const customerId = pet.khach_hang_id;
-            const customerPets = await db.pets.where('khach_hang_id').equals(customerId).toArray();
-            const customerPetIds = customerPets.map(p => p.id);
-
-            const futureAppointments = await db.records
-                .where('thu_id').anyOf(customerPetIds)
-                .and(record => !!record.nhac_hen && new Date(record.nhac_hen) >= startOfDay(new Date()))
-                .toArray();
-            
-            // Exclude the current record if we are editing it
-            const otherAppointments = existingRecord 
-                ? futureAppointments.filter(r => r.id !== existingRecord.id) 
-                : futureAppointments;
-
-            if (otherAppointments.length >= 3) {
-                toast({
-                    title: "Lỗi tạo lịch hẹn",
-                    description: "Khách hàng đã đạt đến giới hạn tối đa (3) lịch hẹn trong tương lai.",
-                    variant: "destructive",
-                });
-                return;
-            }
-        }
-    }
-
-
     const dataToSave = {
         ...values,
         ngay_kham: values.ngay_kham.toISOString(),
-        nhac_hen: values.nhac_hen ? startOfDay(new Date(values.nhac_hen)).toISOString() : null,
+        nhac_hen: (values.nhac_hen || []).filter(h => h.ngay).map(h => ({
+          ...h,
+          ngay: startOfDay(new Date(h.ngay)).toISOString()
+        })),
     };
 
     try {
@@ -344,39 +327,53 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
                 </FormItem>
               )}
             />
-             <div className="space-y-2">
-                <FormLabel>Nhắc hẹn</FormLabel>
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
+            <div className="space-y-4">
+              <FormLabel>Nhắc hẹn</FormLabel>
+              {fields.map((field, index) => (
+                <div key={field.id} className="flex items-end gap-2">
+                  <FormField
                     control={form.control}
-                    name="nhac_hen"
+                    name={`nhac_hen.${index}.ngay`}
                     render={({ field }) => (
-                        <FormItem>
-                            <FormControl>
-                                <Input
-                                    type="date"
-                                    {...field}
-                                    value={field.value || ''}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                    />
-                    <FormField
+                  />
+                  <FormField
                     control={form.control}
-                    name="noi_dung_hen"
+                    name={`nhac_hen.${index}.noi_dung`}
                     render={({ field }) => (
-                        <FormItem>
-                            <FormControl>
-                            <Input placeholder="Nội dung hẹn (tái khám, tiêm, ...)" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input placeholder="Nội dung hẹn (tái khám, tiêm, ...)" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                    />
+                  />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                 <FormDescription className="text-xs px-1">Để trống nếu không có lịch hẹn.</FormDescription>
+              ))}
+              {fields.length < 3 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ ngay: "", noi_dung: "" })}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Thêm nhắc hẹn
+                </Button>
+              )}
+              <FormDescription className="text-xs px-1">
+                Bạn có thể thêm tối đa 3 lịch hẹn cho mỗi lần khám.
+              </FormDescription>
             </div>
 
             <FormField
