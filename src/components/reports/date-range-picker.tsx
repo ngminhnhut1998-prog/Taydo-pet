@@ -39,14 +39,14 @@ export function DateRangePicker({
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
+                  {format(date.from, "dd/MM/y")} -{" "}
+                  {format(date.to, "dd/MM/y")}
                 </>
               ) : (
-                format(date.from, "LLL dd, y")
+                format(date.from, "dd/MM/y")
               )
             ) : (
-              <span>Pick a date</span>
+              <span>Chọn khoảng thời gian</span>
             )}
           </Button>
         </PopoverTrigger>

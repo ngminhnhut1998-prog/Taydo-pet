@@ -1,14 +1,19 @@
 
 "use client"
 
+import { useState } from "react";
 import { RevenueChart } from "@/components/reports/revenue-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DateRangePicker } from "@/components/reports/date-range-picker";
+import { ReportFilters } from "@/components/reports/report-filters";
 
 export default function ReportsPage() {
+    const today = new Date();
+    const [dailyFilter, setDailyFilter] = useState({ month: today.getMonth(), year: today.getFullYear() });
+    const [monthlyFilter, setMonthlyFilter] = useState({ year: today.getFullYear() });
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -30,31 +35,47 @@ export default function ReportsPage() {
                     <TabsTrigger value="month">Theo tháng</TabsTrigger>
                     <TabsTrigger value="year">Theo năm</TabsTrigger>
                 </TabsList>
+                
                 <TabsContent value="day" className="space-y-4">
                     <div className="flex items-center justify-start">
-                        <DateRangePicker />
+                        <ReportFilters 
+                            mode="month"
+                            year={dailyFilter.year}
+                            month={dailyFilter.month}
+                            onYearChange={(year) => setDailyFilter(prev => ({ ...prev, year }))}
+                            onMonthChange={(month) => setDailyFilter(prev => ({ ...prev, month }))}
+                        />
                     </div>
                      <Card>
                         <CardHeader>
                             <CardTitle>Doanh thu theo ngày</CardTitle>
-                            <CardDescription>Biểu đồ doanh thu trong khoảng thời gian đã chọn.</CardDescription>
+                            <CardDescription>Biểu đồ doanh thu các ngày trong tháng đã chọn.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <RevenueChart />
+                            <RevenueChart mode="daily" year={dailyFilter.year} month={dailyFilter.month} />
                         </CardContent>
                     </Card>
                 </TabsContent>
+
                  <TabsContent value="month" className="space-y-4">
+                     <div className="flex items-center justify-start">
+                        <ReportFilters 
+                            mode="year"
+                            year={monthlyFilter.year}
+                            onYearChange={(year) => setMonthlyFilter({ year })}
+                        />
+                    </div>
                     <Card>
                         <CardHeader>
                             <CardTitle>Doanh thu theo tháng</CardTitle>
-                            <CardDescription>Biểu đồ doanh thu trong 6 tháng gần nhất.</CardDescription>
+                            <CardDescription>Biểu đồ doanh thu các tháng trong năm đã chọn.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <RevenueChart />
+                            <RevenueChart mode="monthly" year={monthlyFilter.year} />
                         </CardContent>
                     </Card>
                 </TabsContent>
+
                  <TabsContent value="year" className="space-y-4">
                     <Card>
                         <CardHeader>
@@ -62,7 +83,7 @@ export default function ReportsPage() {
                             <CardDescription>Biểu đồ doanh thu trong 3 năm gần nhất.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <RevenueChart />
+                            <RevenueChart mode="yearly" />
                         </CardContent>
                     </Card>
                 </TabsContent>

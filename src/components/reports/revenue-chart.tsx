@@ -1,30 +1,16 @@
+
 "use client"
 
-import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { useLiveQuery } from "dexie-react-hooks"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-
-const chartData = [
-  { month: "Tháng 1", revenue: 18600000 },
-  { month: "Tháng 2", revenue: 30500000 },
-  { month: "Tháng 3", revenue: 23700000 },
-  { month: "Tháng 4", revenue: 27300000 },
-  { month: "Tháng 5", revenue: 20900000 },
-  { month: "Tháng 6", revenue: 21400000 },
-]
+import { db } from "@/lib/db"
+import { getDaysInMonth, getMonth, getYear, startOfMonth, endOfMonth, startOfDay, endOfDay, eachDayOfInterval, format, eachMonthOfInterval, startOfYear, endOfYear, subYears } from "date-fns"
+import { Loader2 } from "lucide-react"
 
 const chartConfig = {
   revenue: {
@@ -33,32 +19,108 @@ const chartConfig = {
   },
 }
 
-export function RevenueChart() {
+interface RevenueChartProps {
+    mode: 'daily' | 'monthly' | 'yearly';
+    year?: number;
+    month?: number; // 0-11 for Date object
+}
+
+export function RevenueChart({ mode, year, month }: RevenueChartProps) {
+    const data = useLiveQuery(async () => {
+        const records = await db.records.toArray();
+        
+        if (mode === 'daily') {
+            if (year === undefined || month === undefined) return [];
+            const targetDate = new Date(year, month);
+            const interval = { start: startOfMonth(targetDate), end: endOfMonth(targetDate) };
+            const daysInMonth = eachDayOfInterval(interval);
+
+            return daysInMonth.map(day => {
+                const dailyTotal = records
+                    .filter(r => {
+                        const recordDate = new Date(r.ngay_kham);
+                        return recordDate >= startOfDay(day) && recordDate <= endOfDay(day);
+                    })
+                    .reduce((sum, r) => sum + (r.chi_phi || 0), 0);
+                
+                return { name: format(day, 'dd'), revenue: dailyTotal };
+            });
+        }
+        
+        if (mode === 'monthly') {
+            if (year === undefined) return [];
+            const targetDate = new Date(year, 0);
+            const interval = { start: startOfYear(targetDate), end: endOfYear(targetDate) };
+            const monthsInYear = eachMonthOfInterval(interval);
+
+            return monthsInYear.map(monthStart => {
+                const monthEnd = endOfMonth(monthStart);
+                const monthlyTotal = records
+                    .filter(r => {
+                        const recordDate = new Date(r.ngay_kham);
+                        return recordDate >= monthStart && recordDate <= monthEnd;
+                    })
+                    .reduce((sum, r) => sum + (r.chi_phi || 0), 0);
+
+                return { name: `T${getMonth(monthStart) + 1}`, revenue: monthlyTotal };
+            });
+        }
+
+        if (mode === 'yearly') {
+            const currentYear = getYear(new Date());
+            const years = [currentYear - 2, currentYear - 1, currentYear];
+            
+            return years.map(y => {
+                const yearStart = startOfYear(new Date(y, 0));
+                const yearEnd = endOfYear(new Date(y, 0));
+                 const yearlyTotal = records
+                    .filter(r => {
+                        const recordDate = new Date(r.ngay_kham);
+                        return recordDate >= yearStart && recordDate <= yearEnd;
+                    })
+                    .reduce((sum, r) => sum + (r.chi_phi || 0), 0);
+
+                return { name: y.toString(), revenue: yearlyTotal };
+            });
+        }
+
+        return [];
+    }, [mode, year, month]);
+
+    if (!data) {
+        return (
+            <div className="flex items-center justify-center min-h-[200px] w-full">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
   return (
-      <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-        <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, bottom: 0, left: 20}}>
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey="month"
-            tickLine={false}
-            tickMargin={10}
-            axisLine={false}
-            tickFormatter={(value) => value.slice(0, 6)}
-          />
-           <YAxis
-            tickFormatter={(value) => `${Number(value) / 1000000}M`}
-            tickLine={false}
-            axisLine={false}
-            width={40}
-          />
-          <ChartTooltip
-            cursor={false}
-            content={<ChartTooltipContent 
-                formatter={(value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
-            />}
-          />
-          <Bar dataKey="revenue" fill="var(--color-revenue)" radius={8} />
-        </BarChart>
+      <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+        <ResponsiveContainer>
+            <BarChart accessibilityLayer data={data} margin={{ top: 20, right: 20, bottom: 0, left: 20}}>
+            <CartesianGrid vertical={false} />
+            <XAxis
+                dataKey="name"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+            />
+            <YAxis
+                tickFormatter={(value) => `${Number(value) / 1000000}M`}
+                tickLine={false}
+                axisLine={false}
+                width={40}
+            />
+            <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent 
+                    formatter={(value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
+                />}
+            />
+            <Bar dataKey="revenue" fill="var(--color-revenue)" radius={8} />
+            </BarChart>
+        </ResponsiveContainer>
       </ChartContainer>
   )
 }
