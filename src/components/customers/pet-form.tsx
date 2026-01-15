@@ -1,0 +1,122 @@
+"use client";
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { petApi } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import type { Pet } from '@/lib/db';
+import { useEffect } from 'react';
+
+const formSchema = z.object({
+  ten: z.string().min(1, { message: "Tên không được để trống." }),
+  loai_thu: z.string().min(2, { message: "Loài thú không được để trống." }),
+  giong: z.string().min(2, { message: "Giống không được để trống." }),
+});
+
+interface PetFormProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  customerId: string;
+  existingPet?: Pet;
+}
+
+export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormProps) {
+  const { toast } = useToast();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      ten: "",
+      loai_thu: "",
+      giong: "",
+    },
+  });
+
+  useEffect(() => {
+    if (existingPet) {
+      form.reset(existingPet);
+    } else {
+      form.reset({ ten: "", loai_thu: "", giong: "" });
+    }
+  }, [existingPet, form, isOpen]);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      if (existingPet) {
+        await petApi.update(existingPet.id, values);
+        toast({ title: "Thành công", description: "Đã cập nhật thông tin thú cưng." });
+      } else {
+        await petApi.create({ ...values, khach_hang_id: customerId });
+        toast({ title: "Thành công", description: "Đã thêm thú cưng mới." });
+      }
+      setIsOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Lỗi", description: "Không thể lưu thông tin. Vui lòng thử lại.", variant: 'destructive' });
+    }
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{existingPet ? 'Sửa thông tin thú cưng' : 'Thêm thú cưng mới'}</DialogTitle>
+           <DialogDescription>
+            {existingPet ? 'Cập nhật thông tin cho thú cưng này.' : 'Điền thông tin để thêm một thú cưng mới.'}
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+            <FormField
+              control={form.control}
+              name="ten"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tên thú cưng</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Mực" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="loai_thu"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Loài thú</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Chó" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="giong"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Giống</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Cỏ" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Hủy</Button>
+              <Button type="submit">Lưu thông tin</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

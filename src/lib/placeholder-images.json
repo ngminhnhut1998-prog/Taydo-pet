@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "logo",
+      "description": "Application logo",
+      "imageUrl": "https://images.unsplash.com/photo-1636955903101-d6b4b926018c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwYXclMjBsb2dvfGVufDB8fHx8MTc2ODUwNTc2Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "paw logo"
+    }
+  ]
 }
