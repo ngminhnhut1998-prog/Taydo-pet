@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReportFilters } from "@/components/reports/report-filters";
 import { DailyRevenueList } from "@/components/reports/daily-revenue-list";
+import { MonthlyRevenueList } from "@/components/reports/monthly-revenue-list";
 
 export default function ReportsPage() {
     const today = new Date();
@@ -76,6 +77,7 @@ export default function ReportsPage() {
                             <RevenueChart mode="monthly" year={monthlyFilter.year} />
                         </CardContent>
                     </Card>
+                    <MonthlyRevenueList year={monthlyFilter.year} />
                 </TabsContent>
 
                  <TabsContent value="year" className="space-y-4">
