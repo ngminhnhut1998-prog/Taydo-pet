@@ -26,6 +26,7 @@ const formSchema = z.object({
   trieu_chung: z.string().optional(),
   chan_doan: z.string().min(2, { message: "Chẩn đoán không được để trống." }),
   don_thuoc: z.string().min(2, { message: "Đơn thuốc không được để trống." }),
+  ban_kem: z.string().optional(),
   ghi_chu: z.string().optional(),
   nhac_hen: z.string().optional().nullable(),
   chi_phi: z.coerce.number().min(0, { message: "Chi phí không được là số âm." }).optional(),
@@ -48,6 +49,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
       trieu_chung: "",
       chan_doan: "",
       don_thuoc: "",
+      ban_kem: "",
       ghi_chu: "",
       nhac_hen: "",
       chi_phi: undefined,
@@ -62,6 +64,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
         nhac_hen: existingRecord.nhac_hen ? format(new Date(existingRecord.nhac_hen), "yyyy-MM-dd'T'HH:mm") : "",
         can_nang_kham: existingRecord.can_nang_kham ?? undefined,
         trieu_chung: existingRecord.trieu_chung ?? "",
+        ban_kem: existingRecord.ban_kem ?? "",
         ghi_chu: existingRecord.ghi_chu ?? "",
         chi_phi: existingRecord.chi_phi ?? undefined,
       });
@@ -72,6 +75,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
             trieu_chung: "",
             chan_doan: "",
             don_thuoc: "",
+            ban_kem: "",
             ghi_chu: "",
             nhac_hen: "",
             chi_phi: undefined,
@@ -203,6 +207,19 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
                   <FormLabel>Đơn thuốc</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Thuốc A: 2 viên/ngày..." rows={3} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="ban_kem"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sản phẩm/dịch vụ bán kèm</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Vòng cổ chống ve, Sữa tắm..." rows={2} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

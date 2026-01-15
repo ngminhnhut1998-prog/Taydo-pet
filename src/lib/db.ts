@@ -30,6 +30,7 @@ export interface MedicalRecord {
   trieu_chung?: string;
   chan_doan: string;
   don_thuoc: string;
+  ban_kem?: string;
   ghi_chu?: string;
   nhac_hen?: string | null;
   chi_phi?: number;

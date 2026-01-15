@@ -84,6 +84,7 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
                                     <TableHead>Triệu chứng</TableHead>
                                     <TableHead>Chẩn đoán</TableHead>
                                     <TableHead>Đơn thuốc</TableHead>
+                                    <TableHead>Bán kèm</TableHead>
                                     <TableHead>Ghi chú</TableHead>
                                     <TableHead>Tái khám</TableHead>
                                     <TableHead>Chi phí</TableHead>
@@ -98,6 +99,7 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
                                         <TableCell className="text-muted-foreground max-w-xs">{record.trieu_chung}</TableCell>
                                         <TableCell>{record.chan_doan}</TableCell>
                                         <TableCell className="text-muted-foreground max-w-xs whitespace-pre-wrap">{record.don_thuoc}</TableCell>
+                                        <TableCell className="text-muted-foreground max-w-xs">{record.ban_kem}</TableCell>
                                         <TableCell className="text-muted-foreground max-w-xs">{record.ghi_chu}</TableCell>
                                         <TableCell>
                                             {record.nhac_hen ? (
