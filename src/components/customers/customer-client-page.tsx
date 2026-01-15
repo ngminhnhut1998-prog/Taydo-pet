@@ -104,7 +104,7 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
                                         <TableCell>
                                             {record.nhac_hen ? (
                                                 <div className='flex flex-col'>
-                                                    <Badge variant="secondary">{format(new Date(record.nhac_hen), 'dd/MM/yyyy HH:mm')}</Badge>
+                                                    <Badge variant="secondary">{format(new Date(record.nhac_hen), 'dd/MM/yyyy')}</Badge>
                                                     <span className='text-xs text-muted-foreground mt-1'>{record.noi_dung_hen}</span>
                                                 </div>
                                             ) : '-'}

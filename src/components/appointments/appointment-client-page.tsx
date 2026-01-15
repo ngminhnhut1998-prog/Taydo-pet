@@ -114,7 +114,7 @@ export default function AppointmentClientPage() {
               {appointments.map(({ record, pet, customer }) => (
                 <TableRow key={record.id}>
                   <TableCell>
-                      <Badge variant="secondary">{record.nhac_hen ? format(new Date(record.nhac_hen), 'dd/MM/yyyy HH:mm') : ''}</Badge>
+                      <Badge variant="secondary">{record.nhac_hen ? format(new Date(record.nhac_hen), 'dd/MM/yyyy') : ''}</Badge>
                   </TableCell>
                   <TableCell>
                       <div className="flex items-center gap-3">

@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { recordApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import type { MedicalRecord } from '@/lib/db';
@@ -63,7 +63,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
       form.reset({
         ...existingRecord,
         ngay_kham: new Date(existingRecord.ngay_kham),
-        nhac_hen: existingRecord.nhac_hen ? format(new Date(existingRecord.nhac_hen), "yyyy-MM-dd'T'HH:mm") : "",
+        nhac_hen: existingRecord.nhac_hen ? format(new Date(existingRecord.nhac_hen), "yyyy-MM-dd") : "",
         noi_dung_hen: existingRecord.noi_dung_hen ?? "",
         can_nang_kham: existingRecord.can_nang_kham ?? undefined,
         trieu_chung: existingRecord.trieu_chung ?? "",
@@ -91,7 +91,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
     const dataToSave = {
         ...values,
         ngay_kham: values.ngay_kham.toISOString(),
-        nhac_hen: values.nhac_hen ? new Date(values.nhac_hen).toISOString() : null,
+        nhac_hen: values.nhac_hen ? startOfDay(new Date(values.nhac_hen)).toISOString() : null,
     };
 
     try {
@@ -252,7 +252,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
                         <FormItem>
                             <FormControl>
                                 <Input
-                                    type="datetime-local"
+                                    type="date"
                                     {...field}
                                     value={field.value || ''}
                                 />

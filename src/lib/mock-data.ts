@@ -1,4 +1,4 @@
-import { subDays, addDays, setHours, formatISO } from 'date-fns';
+import { subDays, addDays, setHours, formatISO, startOfDay } from 'date-fns';
 import type { Customer, Pet, MedicalRecord } from './db';
 
 const now = new Date();
@@ -35,7 +35,7 @@ export const mockRecords: MedicalRecord[] = [
         don_thuoc: 'Cetirizine 10mg (1 viên/ngày)\nDầu cá Omega-3 (1 viên/ngày)',
         ban_kem: 'Vòng cổ chống ve',
         ghi_chu: 'Tái khám nếu triệu chứng không giảm',
-        nhac_hen: formatISO(setHours(now, 14)), // Hôm nay
+        nhac_hen: startOfDay(now).toISOString(), // Hôm nay
         noi_dung_hen: 'Tái khám da',
         chi_phi: 350000,
     },
@@ -79,7 +79,7 @@ export const mockRecords: MedicalRecord[] = [
         don_thuoc: 'Tẩy giun Drontal, tiêm phòng 7 bệnh',
         ban_kem: 'Thức ăn hạt Royal Canin',
         ghi_chu: 'Hẹn tái khám tiêm nhắc lại sau 1 năm',
-        nhac_hen: addDays(now, 30).toISOString(),
+        nhac_hen: startOfDay(addDays(now, 30)).toISOString(),
         noi_dung_hen: 'Tiêm nhắc lại vắc-xin',
         chi_phi: 750000,
     },
@@ -94,7 +94,7 @@ export const mockRecords: MedicalRecord[] = [
         don_thuoc: 'Kháng sinh Amoxicillin, Vitamin C',
         ban_kem: '',
         ghi_chu: 'Giữ ấm, cho ăn thức ăn mềm',
-        nhac_hen: formatISO(setHours(now, 10)), // Hôm nay
+        nhac_hen: startOfDay(now).toISOString(), // Hôm nay
         noi_dung_hen: 'Tái khám hô hấp',
         chi_phi: 250000,
     },
@@ -109,7 +109,7 @@ export const mockRecords: MedicalRecord[] = [
         don_thuoc: 'Men tiêu hóa, thuốc chống nôn',
         ban_kem: 'Pate lon cho chó',
         ghi_chu: 'Theo dõi tình trạng, cho uống nhiều nước',
-        nhac_hen: formatISO(setHours(addDays(now, 1), 9)), // Ngày mai
+        nhac_hen: startOfDay(addDays(now, 1)).toISOString(), // Ngày mai
         noi_dung_hen: 'Tái khám tiêu hóa',
         chi_phi: 450000,
     },
