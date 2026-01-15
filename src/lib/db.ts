@@ -16,6 +16,8 @@ export interface Pet {
   ten: string;
   loai_thu: string;
   giong: string;
+  can_nang?: number;
+  gioi_tinh?: 'Đực' | 'Cái';
   khach_hang_id: string;
   created?: string;
   updated?: string;
@@ -49,7 +51,24 @@ class VetClinicDB extends Dexie {
 
   constructor() {
     super('VetClinicDB');
-    this.version(2).stores({
+    this.version(3).stores({
+      customers: 'id, ten, so_dien_thoai',
+      pets: 'id, ten, khach_hang_id',
+      records: 'id, thu_id, nhac_hen',
+      syncQueue: '++id, timestamp',
+    }).upgrade(tx => {
+      // Sample upgrade function. If we were migrating real data, we'd do it here.
+      // For mock data, we just clear and re-seed, so this can be minimal.
+      console.log("Upgrading database to version 3");
+      return tx.table('pets').toCollection().modify(pet => {
+        // This is a sample on how you would migrate.
+        // On a fresh install, this won't run.
+        if (!pet.can_nang) pet.can_nang = undefined;
+        if (!pet.gioi_tinh) pet.gioi_tinh = undefined;
+      });
+    });
+
+     this.version(2).stores({
       customers: 'id, ten, so_dien_thoai',
       pets: 'id, ten, khach_hang_id',
       records: 'id, thu_id, nhac_hen',

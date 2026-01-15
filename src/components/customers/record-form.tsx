@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format, formatISO } from 'date-fns';
+import { format } from 'date-fns';
 import { recordApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import type { MedicalRecord } from '@/lib/db';
@@ -114,7 +114,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            format(field.value, "dd/MM/yyyy")
                           ) : (
                             <span>Chọn một ngày</span>
                           )}
@@ -156,9 +156,9 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
               name="don_thuoc"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Đơn thuốc</FormLabel>
+                  <FormLabel>Đơn thuốc & Ghi chú</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Thuốc A: 2 viên/ngày..." {...field} />
+                    <Textarea placeholder="Thuốc A: 2 viên/ngày..." rows={4} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

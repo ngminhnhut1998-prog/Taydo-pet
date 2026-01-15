@@ -1,22 +1,31 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Customer, type Pet, type MedicalRecord } from '@/lib/db';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Edit, PawPrint, Users, Search } from 'lucide-react';
+import { PlusCircle, Edit, PawPrint, Users, Search, ArrowLeft, Bone, Heart, Calendar, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { CustomerForm } from './customer-form';
 import { PetForm } from './pet-form';
 import { RecordForm } from './record-form';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Badge } from '../ui/badge';
 
-function RecordList({ petId }: { petId: string }) {
-    const records = useLiveQuery(() => db.records.where('thu_id').equals(petId).sortBy('ngay_kham'), [petId]);
+interface FullCustomerInfo extends Customer {
+    pets: Pet[];
+    petNames: string;
+}
+
+// Level 3: Medical History
+function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
+    const records = useLiveQuery(
+        () => db.records.where('thu_id').equals(pet.id).sortBy('ngay_kham').then(r => r.reverse()),
+        [pet.id]
+    );
     const [isRecordFormOpen, setIsRecordFormOpen] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | undefined>(undefined);
 
@@ -26,55 +35,84 @@ function RecordList({ petId }: { petId: string }) {
     };
 
     return (
-        <div className="pl-4 mt-2">
+        <div className="space-y-6">
              <RecordForm 
                 isOpen={isRecordFormOpen} 
                 setIsOpen={setIsRecordFormOpen}
-                petId={petId}
+                petId={pet.id}
                 existingRecord={selectedRecord}
             />
-            <div className="flex justify-between items-center mb-2">
-                <h4 className="font-semibold">Lịch sử khám</h4>
-                <Button variant="outline" size="sm" onClick={() => openRecordForm()}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Thêm bệnh án
+            <div>
+                <Button variant="ghost" onClick={onBack} className="mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Quay lại danh sách thú cưng
                 </Button>
-            </div>
-            {records && records.length > 0 ? (
-                <div className='border rounded-lg'>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Ngày khám</TableHead>
-                            <TableHead>Chẩn đoán</TableHead>
-                            <TableHead>Lịch tái khám</TableHead>
-                            <TableHead className='text-right'>Thao tác</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {records.map(record => (
-                            <TableRow key={record.id}>
-                                <TableCell>{format(new Date(record.ngay_kham), 'dd/MM/yyyy')}</TableCell>
-                                <TableCell>{record.chan_doan}</TableCell>
-                                <TableCell>{record.nhac_hen ? format(new Date(record.nhac_hen), 'dd/MM/yyyy HH:mm') : 'Không'}</TableCell>
-                                <TableCell className="text-right">
-                                     <Button variant="ghost" size="icon" onClick={() => openRecordForm(record)}>
-                                        <Edit className="h-4 w-4" />
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                        <AvatarImage src={`https://i.pravatar.cc/150?u=${pet.id}`} alt={pet.ten} />
+                        <AvatarFallback>{pet.ten.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <h1 className="text-3xl font-bold">{pet.ten}</h1>
+                        <p className="text-muted-foreground">{pet.loai_thu} - {pet.giong}</p>
+                    </div>
                 </div>
-            ) : (
-                <div className='text-center py-6 text-sm text-muted-foreground bg-secondary/30 rounded-lg'>Chưa có lịch sử khám.</div>
-            )}
+            </div>
+            
+            <Card>
+                <CardHeader className='flex-row justify-between items-center'>
+                    <CardTitle>Lịch sử khám bệnh</CardTitle>
+                    <Button variant="outline" size="sm" onClick={() => openRecordForm()}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Thêm bệnh án
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    {records && records.length > 0 ? (
+                        <div className="relative pl-6 before:absolute before:inset-y-0 before:left-6 before:w-px before:bg-border">
+                            {records.map(record => (
+                                <div key={record.id} className="relative pb-8">
+                                    <div className="absolute -left-3 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                                        <FileText className="h-4 w-4" />
+                                    </div>
+                                    <div className="pl-8">
+                                        <p className="font-semibold text-primary">{format(new Date(record.ngay_kham), 'dd/MM/yyyy')}</p>
+                                        <Card className='mt-2'>
+                                            <CardHeader className='pb-4 flex-row justify-between items-start'>
+                                                <div>
+                                                    <CardTitle className='text-lg'>Chẩn đoán: {record.chan_doan}</CardTitle>
+                                                    {record.nhac_hen && (
+                                                        <Badge variant="secondary" className='mt-2'>
+                                                            Tái khám: {format(new Date(record.nhac_hen), 'dd/MM/yyyy HH:mm')}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <Button variant="ghost" size="icon" onClick={() => openRecordForm(record)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <p className='font-semibold'>Đơn thuốc:</p>
+                                                <p className="text-muted-foreground whitespace-pre-wrap">{record.don_thuoc}</p>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 text-muted-foreground">
+                            <FileText className="mx-auto h-12 w-12" />
+                            <p className="mt-4">Chưa có lịch sử khám bệnh nào cho thú cưng này.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }
 
-function PetList({ customerId }: { customerId: string }) {
-    const pets = useLiveQuery(() => db.pets.where('khach_hang_id').equals(customerId).toArray(), [customerId]);
+// Level 2: Pet List
+function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomerInfo; onBack: () => void; onSelectPet: (pet: Pet) => void }) {
     const [isPetFormOpen, setIsPetFormOpen] = useState(false);
     const [selectedPet, setSelectedPet] = useState<Pet | undefined>(undefined);
     
@@ -84,69 +122,107 @@ function PetList({ customerId }: { customerId: string }) {
     };
 
     return (
-        <div className="space-y-4 py-4 px-2 bg-secondary/50 rounded-lg">
-             <PetForm 
+        <div className="space-y-6">
+            <PetForm 
                 isOpen={isPetFormOpen} 
                 setIsOpen={setIsPetFormOpen}
-                customerId={customerId}
+                customerId={customer.id}
                 existingPet={selectedPet}
             />
-            <div className="flex justify-between items-center px-2">
-                <h3 className="text-lg font-semibold flex items-center gap-2"><PawPrint className="h-5 w-5 text-primary" /> Danh sách thú cưng</h3>
+            <div>
+                <Button variant="ghost" onClick={onBack} className="mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Quay lại danh sách khách hàng
+                </Button>
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                        <AvatarImage src={`https://i.pravatar.cc/150?u=${customer.id}`} alt={customer.ten} />
+                        <AvatarFallback>{customer.ten.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <h1 className="text-3xl font-bold">{customer.ten}</h1>
+                        <p className="text-muted-foreground">{customer.so_dien_thoai} - {customer.dia_chi}</p>
+                    </div>
+                </div>
+            </div>
+
+             <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold flex items-center gap-2"><PawPrint className="h-6 w-6 text-primary" /> Danh sách thú cưng</h2>
                 <Button onClick={() => openPetForm()}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Thêm thú cưng
                 </Button>
             </div>
-            {pets && pets.length > 0 ? (
-                 <Accordion type="single" collapsible className="w-full">
-                    {pets.map(pet => (
-                        <Card key={pet.id} className="mb-2 bg-background">
-                             <AccordionItem value={pet.id} className="border-b-0">
-                                <AccordionTrigger className="p-4 hover:no-underline">
-                                    <div className="flex justify-between items-center w-full">
-                                        <div className="flex items-center gap-4">
-                                            <Avatar className="h-10 w-10">
-                                                <AvatarImage src={`https://i.pravatar.cc/150?u=${pet.id}`} alt={pet.ten} />
-                                                <AvatarFallback>{pet.ten.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <p className="font-bold text-base">{pet.ten}</p>
-                                                <p className="text-sm text-muted-foreground">{pet.loai_thu} - {pet.giong}</p>
-                                            </div>
-                                        </div>
-                                        <div className='pr-4'>
-                                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openPetForm(pet); }}>
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    <RecordList petId={pet.id} />
-                                </AccordionContent>
-                             </AccordionItem>
+
+            {customer.pets && customer.pets.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {customer.pets.map(pet => (
+                        <Card key={pet.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => onSelectPet(pet)}>
+                            <CardHeader className="flex-row gap-4 items-center">
+                                <Avatar className="h-12 w-12">
+                                    <AvatarImage src={`https://i.pravatar.cc/150?u=${pet.id}`} alt={pet.ten} />
+                                    <AvatarFallback>{pet.ten.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <CardTitle>{pet.ten}</CardTitle>
+                                    <p className="text-sm text-muted-foreground">{pet.giong}</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="ml-auto" onClick={(e) => { e.stopPropagation(); openPetForm(pet); }}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-2 gap-2 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <Bone className="h-4 w-4 text-muted-foreground" />
+                                    <span>{pet.can_nang ?? 'N/A'} kg</span>
+                                </div>
+                                 <div className="flex items-center gap-2">
+                                    <Heart className="h-4 w-4 text-muted-foreground" />
+                                    <span>{pet.gioi_tinh ?? 'N/A'}</span>
+                                </div>
+                            </CardContent>
                         </Card>
                     ))}
-                 </Accordion>
+                </div>
             ) : (
-                <div className="text-sm text-muted-foreground text-center py-8">Chưa có thông tin thú cưng.</div>
+                <div className="text-center py-12 text-muted-foreground bg-secondary/30 rounded-lg">
+                    <PawPrint className="mx-auto h-12 w-12" />
+                    <p className="mt-4">Khách hàng này chưa có thú cưng nào.</p>
+                </div>
             )}
         </div>
     );
 }
 
-export default function CustomerClientPage() {
+// Level 1: Customer List
+function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: FullCustomerInfo) => void }) {
     const [searchTerm, setSearchTerm] = useState('');
-    const customers = useLiveQuery(() => 
-        searchTerm ? 
-        db.customers
+    const allCustomers = useLiveQuery(() => db.customers.toArray(), []);
+    const allPets = useLiveQuery(() => db.pets.toArray(), []);
+
+    const customers = useMemo((): FullCustomerInfo[] => {
+        if (!allCustomers || !allPets) return [];
+        
+        const petsByCustomerId = allPets.reduce((acc, pet) => {
+            if (!acc[pet.khach_hang_id]) {
+                acc[pet.khach_hang_id] = [];
+            }
+            acc[pet.khach_hang_id].push(pet);
+            return acc;
+        }, {} as Record<string, Pet[]>);
+
+        return allCustomers
+            .map(c => ({
+                ...c,
+                pets: petsByCustomerId[c.id] || [],
+                petNames: (petsByCustomerId[c.id] || []).map(p => p.ten).join(', ')
+            }))
             .filter(c => 
                 c.ten.toLowerCase().includes(searchTerm.toLowerCase()) || 
                 c.so_dien_thoai.includes(searchTerm)
-            )
-            .toArray()
-        : db.customers.toArray()
-    , [searchTerm]);
+            );
+
+    }, [allCustomers, allPets, searchTerm]);
+
     const [isCustomerFormOpen, setIsCustomerFormOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
 
@@ -157,6 +233,10 @@ export default function CustomerClientPage() {
 
     return (
         <div className="space-y-6">
+            <div className="mb-6">
+                <h1 className="text-3xl font-bold">Quản lý Khách hàng</h1>
+                <p className="text-muted-foreground">Tìm kiếm, xem và quản lý thông tin khách hàng và thú cưng của họ.</p>
+            </div>
             <CustomerForm 
                 isOpen={isCustomerFormOpen} 
                 setIsOpen={setIsCustomerFormOpen}
@@ -180,34 +260,40 @@ export default function CustomerClientPage() {
             <Card>
                 <CardContent className="p-0">
                     {customers && customers.length > 0 ? (
-                        <Accordion type="single" collapsible className="w-full">
-                            {customers.map(customer => (
-                                <AccordionItem value={customer.id} key={customer.id}>
-                                    <AccordionTrigger className="px-6 py-4 hover:bg-accent/50 hover:no-underline">
-                                        <div className="flex justify-between items-center w-full">
-                                            <div className="flex items-center gap-4">
-                                                <Avatar className="h-10 w-10">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Tên khách hàng</TableHead>
+                                    <TableHead>Số điện thoại</TableHead>
+                                    <TableHead>Địa chỉ</TableHead>
+                                    <TableHead>Thú cưng</TableHead>
+                                    <TableHead className='text-right'>Thao tác</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {customers.map(customer => (
+                                    <TableRow key={customer.id} onClick={() => onSelectCustomer(customer)} className="cursor-pointer">
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-9 w-9 hidden sm:flex">
                                                     <AvatarImage src={`https://i.pravatar.cc/150?u=${customer.id}`} alt={customer.ten} />
                                                     <AvatarFallback>{customer.ten.charAt(0)}</AvatarFallback>
                                                 </Avatar>
-                                                <div>
-                                                    <p className="font-bold text-base">{customer.ten}</p>
-                                                    <p className="text-sm text-muted-foreground">{customer.so_dien_thoai}</p>
-                                                </div>
+                                                <span className="font-medium">{customer.ten}</span>
                                             </div>
-                                            <div className='pr-4'>
-                                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openCustomerForm(customer); }}>
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="p-0">
-                                        <PetList customerId={customer.id} />
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
+                                        </TableCell>
+                                        <TableCell>{customer.so_dien_thoai}</TableCell>
+                                        <TableCell className="text-muted-foreground max-w-xs truncate">{customer.dia_chi}</TableCell>
+                                        <TableCell className="text-muted-foreground">{customer.petNames}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openCustomerForm(customer); }}>
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     ) : (
                          <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
                             <Users className="w-16 h-16 text-muted-foreground" />
@@ -219,4 +305,39 @@ export default function CustomerClientPage() {
             </Card>
         </div>
     );
+}
+
+
+// Main Component to handle navigation state
+export default function CustomerClientPage() {
+    const [selectedCustomer, setSelectedCustomer] = useState<FullCustomerInfo | null>(null);
+    const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+
+    const handleSelectCustomer = (customer: FullCustomerInfo) => {
+        setSelectedCustomer(customer);
+        setSelectedPet(null);
+    }
+
+    const handleSelectPet = (pet: Pet) => {
+        setSelectedPet(pet);
+    }
+
+    const handleBackToCustomerList = () => {
+        setSelectedCustomer(null);
+        setSelectedPet(null);
+    }
+    
+    const handleBackToPetList = () => {
+        setSelectedPet(null);
+    }
+
+    if (selectedCustomer && selectedPet) {
+        return <MedicalHistoryView pet={selectedPet} onBack={handleBackToPetList} />;
+    }
+
+    if (selectedCustomer) {
+        return <PetListView customer={selectedCustomer} onBack={handleBackToCustomerList} onSelectPet={handleSelectPet} />;
+    }
+
+    return <CustomerListView onSelectCustomer={handleSelectCustomer} />;
 }

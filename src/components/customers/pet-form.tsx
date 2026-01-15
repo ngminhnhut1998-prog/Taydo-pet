@@ -11,11 +11,14 @@ import { petApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import type { Pet } from '@/lib/db';
 import { useEffect } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const formSchema = z.object({
   ten: z.string().min(1, { message: "Tên không được để trống." }),
   loai_thu: z.string().min(2, { message: "Loài thú không được để trống." }),
   giong: z.string().min(2, { message: "Giống không được để trống." }),
+  can_nang: z.coerce.number().positive({ message: "Cân nặng phải là số dương."}).optional(),
+  gioi_tinh: z.enum(['Đực', 'Cái']).optional(),
 });
 
 interface PetFormProps {
@@ -40,7 +43,7 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
     if (existingPet) {
       form.reset(existingPet);
     } else {
-      form.reset({ ten: "", loai_thu: "", giong: "" });
+      form.reset({ ten: "", loai_thu: "", giong: "", can_nang: undefined, gioi_tinh: undefined });
     }
   }, [existingPet, form, isOpen]);
 
@@ -62,7 +65,7 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{existingPet ? 'Sửa thông tin thú cưng' : 'Thêm thú cưng mới'}</DialogTitle>
            <DialogDescription>
@@ -84,32 +87,70 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="loai_thu"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Loài thú</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Chó" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="giong"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Giống</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Cỏ" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="loai_thu"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Loài thú</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Chó" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="giong"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Giống</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Cỏ" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="can_nang"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Cân nặng (kg)</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="5.5" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="gioi_tinh"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Giới tính</FormLabel>
+                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Chọn giới tính" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Đực">Đực</SelectItem>
+                                    <SelectItem value="Cái">Cái</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Hủy</Button>
               <Button type="submit">Lưu thông tin</Button>

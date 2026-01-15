@@ -12,15 +12,15 @@ export const mockCustomers: Customer[] = [
 
 export const mockPets: Pet[] = [
     // Pets for Nguyễn Văn An
-    { id: 'pet_1', ten: 'Mực', loai_thu: 'Chó', giong: 'Cỏ', khach_hang_id: 'cust_1', created: subDays(now, 10).toISOString() },
-    { id: 'pet_2', ten: 'Vàng', loai_thu: 'Mèo', giong: 'Ta', khach_hang_id: 'cust_1', created: subDays(now, 10).toISOString() },
+    { id: 'pet_1', ten: 'Mực', loai_thu: 'Chó', giong: 'Cỏ', khach_hang_id: 'cust_1', can_nang: 12.5, gioi_tinh: 'Đực', created: subDays(now, 10).toISOString() },
+    { id: 'pet_2', ten: 'Vàng', loai_thu: 'Mèo', giong: 'Ta', khach_hang_id: 'cust_1', can_nang: 4.2, gioi_tinh: 'Cái', created: subDays(now, 10).toISOString() },
     // Pets for Trần Thị Bình
-    { id: 'pet_3', ten: 'Lu', loai_thu: 'Chó', giong: 'Poodle', khach_hang_id: 'cust_2', created: subDays(now, 25).toISOString() },
+    { id: 'pet_3', ten: 'Lu', loai_thu: 'Chó', giong: 'Poodle', khach_hang_id: 'cust_2', can_nang: 6.8, gioi_tinh: 'Đực', created: subDays(now, 25).toISOString() },
     // Pets for Lê Hoàng Cường
-    { id: 'pet_4', ten: 'MiMi', loai_thu: 'Mèo', giong: 'Anh lông ngắn', khach_hang_id: 'cust_3', created: subDays(now, 5).toISOString() },
+    { id: 'pet_4', ten: 'MiMi', loai_thu: 'Mèo', giong: 'Anh lông ngắn', khach_hang_id: 'cust_3', can_nang: 5.1, gioi_tinh: 'Cái', created: subDays(now, 5).toISOString() },
     // Pets for Phạm Thị Dung
-    { id: 'pet_5', ten: 'Rex', loai_thu: 'Chó', giong: 'Husky', khach_hang_id: 'cust_4', created: subDays(now, 40).toISOString() },
-    { id: 'pet_6', ten: 'Bông', loai_thu: 'Mèo', giong: 'Ba Tư', khach_hang_id: 'cust_4', created: subDays(now, 40).toISOString() },
+    { id: 'pet_5', ten: 'Rex', loai_thu: 'Chó', giong: 'Husky', khach_hang_id: 'cust_4', can_nang: 25, gioi_tinh: 'Đực', created: subDays(now, 40).toISOString() },
+    { id: 'pet_6', ten: 'Bông', loai_thu: 'Mèo', giong: 'Ba Tư', khach_hang_id: 'cust_4', can_nang: 4.8, gioi_tinh: 'Cái', created: subDays(now, 40).toISOString() },
 ];
 
 export const mockRecords: MedicalRecord[] = [
@@ -30,8 +30,16 @@ export const mockRecords: MedicalRecord[] = [
         thu_id: 'pet_1', 
         ngay_kham: subDays(now, 8).toISOString(),
         chan_doan: 'Viêm da dị ứng', 
-        don_thuoc: 'Cetirizine 10mg, Dầu cá Omega-3',
+        don_thuoc: 'Cetirizine 10mg (1 viên/ngày)\nDầu cá Omega-3 (1 viên/ngày)',
         nhac_hen: formatISO(setHours(now, 14)), // Hôm nay
+    },
+    { 
+        id: 'rec_1a', 
+        thu_id: 'pet_1', 
+        ngay_kham: subDays(now, 90).toISOString(),
+        chan_doan: 'Tiêm phòng dại', 
+        don_thuoc: 'Vắc-xin Rabisin',
+        nhac_hen: null
     },
     // Records for Vàng (Mèo, cust_1)
     { 
@@ -39,7 +47,7 @@ export const mockRecords: MedicalRecord[] = [
         thu_id: 'pet_2', 
         ngay_kham: subDays(now, 9).toISOString(),
         chan_doan: 'Nhiễm trùng tai', 
-        don_thuoc: 'Otomax Ear Drops',
+        don_thuoc: 'Otomax Ear Drops (nhỏ 2 lần/ngày)',
         nhac_hen: null,
     },
     // Records for Lu (Chó, cust_2)
@@ -48,7 +56,7 @@ export const mockRecords: MedicalRecord[] = [
         thu_id: 'pet_3', 
         ngay_kham: subDays(now, 20).toISOString(),
         chan_doan: 'Kiểm tra sức khỏe định kỳ', 
-        don_thuoc: 'Tẩy giun, tiêm phòng dại',
+        don_thuoc: 'Tẩy giun Drontal, tiêm phòng 7 bệnh',
         nhac_hen: addDays(now, 30).toISOString(),
     },
      // Records for MiMi (Mèo, cust_3)
