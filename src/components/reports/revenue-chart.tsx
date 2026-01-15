@@ -107,10 +107,13 @@ export function RevenueChart({ mode, year, month }: RevenueChartProps) {
                 axisLine={false}
             />
             <YAxis
-                tickFormatter={(value) => `${Number(value) / 1000000}M`}
+                tickFormatter={(value) => new Intl.NumberFormat('vi-VN', {
+                    notation: 'compact',
+                    compactDisplay: 'short'
+                }).format(Number(value))}
                 tickLine={false}
                 axisLine={false}
-                width={40}
+                width={80}
             />
             <ChartTooltip
                 cursor={false}
