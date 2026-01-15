@@ -26,9 +26,13 @@ export interface Pet {
 export interface MedicalRecord {
   id: string;
   ngay_kham: string;
+  can_nang_kham?: number; // Cân nặng tại thời điểm khám
+  trieu_chung?: string;
   chan_doan: string;
   don_thuoc: string;
+  ghi_chu?: string;
   nhac_hen?: string | null;
+  chi_phi?: number;
   thu_id: string;
   created?: string;
   updated?: string;
@@ -51,6 +55,21 @@ class VetClinicDB extends Dexie {
 
   constructor() {
     super('VetClinicDB');
+    this.version(4).stores({
+      customers: 'id, ten, so_dien_thoai',
+      pets: 'id, ten, khach_hang_id',
+      records: 'id, thu_id, ngay_kham, nhac_hen',
+      syncQueue: '++id, timestamp',
+    }).upgrade(tx => {
+        console.log("Upgrading database to version 4");
+        return tx.table('records').toCollection().modify(record => {
+            if (record.can_nang_kham === undefined) record.can_nang_kham = undefined;
+            if (record.trieu_chung === undefined) record.trieu_chung = "";
+            if (record.ghi_chu === undefined) record.ghi_chu = "";
+            if (record.chi_phi === undefined) record.chi_phi = undefined;
+        });
+    });
+    
     this.version(3).stores({
       customers: 'id, ten, so_dien_thoai',
       pets: 'id, ten, khach_hang_id',
@@ -92,15 +111,12 @@ export async function clearDatabase() {
 export async function seedDatabase() {
     try {
         await db.transaction('rw', db.customers, db.pets, db.records, async () => {
-            if (await db.customers.count() === 0) {
-                console.log("Seeding database with mock data...");
-                await db.customers.bulkAdd(mockCustomers);
-                await db.pets.bulkAdd(mockPets);
-                await db.records.bulkAdd(mockRecords);
-                console.log("Database seeded successfully!");
-            } else {
-                console.log("Database already contains data, skipping seed.");
-            }
+            await clearDatabase();
+            console.log("Seeding database with mock data...");
+            await db.customers.bulkAdd(mockCustomers);
+            await db.pets.bulkAdd(mockPets);
+            await db.records.bulkAdd(mockRecords);
+            console.log("Database seeded successfully!");
         });
     } catch (error) {
         console.error("Failed to seed database:", error);

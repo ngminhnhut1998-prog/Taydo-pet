@@ -5,20 +5,25 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Customer, type Pet, type MedicalRecord } from '@/lib/db';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Edit, PawPrint, Users, Search, ArrowLeft, Bone, Heart, Calendar, FileText } from 'lucide-react';
+import { PlusCircle, Edit, PawPrint, Users, Search, ArrowLeft, Bone, Heart, Calendar, FileText, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import { CustomerForm } from './customer-form';
 import { PetForm } from './pet-form';
 import { RecordForm } from './record-form';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 interface FullCustomerInfo extends Customer {
     pets: Pet[];
     petNames: string;
 }
+
+const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+
 
 // Level 3: Medical History
 function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
@@ -61,48 +66,73 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
             
             <Card>
                 <CardHeader className='flex-row justify-between items-center'>
-                    <CardTitle>Lịch sử khám bệnh</CardTitle>
+                    <div>
+                        <CardTitle>Bệnh án điện tử</CardTitle>
+                        <CardDescription>Toàn bộ lịch sử khám và điều trị của {pet.ten}.</CardDescription>
+                    </div>
                     <Button variant="outline" size="sm" onClick={() => openRecordForm()}>
                         <PlusCircle className="mr-2 h-4 w-4" /> Thêm bệnh án
                     </Button>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                     {records && records.length > 0 ? (
-                        <div className="relative pl-6 before:absolute before:inset-y-0 before:left-6 before:w-px before:bg-border">
-                            {records.map(record => (
-                                <div key={record.id} className="relative pb-8">
-                                    <div className="absolute -left-3 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                                        <FileText className="h-4 w-4" />
-                                    </div>
-                                    <div className="pl-8">
-                                        <p className="font-semibold text-primary">{format(new Date(record.ngay_kham), 'dd/MM/yyyy')}</p>
-                                        <Card className='mt-2'>
-                                            <CardHeader className='pb-4 flex-row justify-between items-start'>
-                                                <div>
-                                                    <CardTitle className='text-lg'>Chẩn đoán: {record.chan_doan}</CardTitle>
-                                                    {record.nhac_hen && (
-                                                        <Badge variant="secondary" className='mt-2'>
-                                                            Tái khám: {format(new Date(record.nhac_hen), 'dd/MM/yyyy HH:mm')}
-                                                        </Badge>
-                                                    )}
+                       <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Ngày khám</TableHead>
+                                    <TableHead>Cân nặng (kg)</TableHead>
+                                    <TableHead>Triệu chứng</TableHead>
+                                    <TableHead>Chẩn đoán</TableHead>
+                                    <TableHead>Đơn thuốc</TableHead>
+                                    <TableHead>Ghi chú</TableHead>
+                                    <TableHead>Tái khám</TableHead>
+                                    <TableHead>Chi phí</TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {records.map(record => (
+                                    <TableRow key={record.id}>
+                                        <TableCell className="font-medium">{format(new Date(record.ngay_kham), 'dd/MM/yyyy')}</TableCell>
+                                        <TableCell>{record.can_nang_kham ?? 'N/A'}</TableCell>
+                                        <TableCell className="text-muted-foreground max-w-xs">{record.trieu_chung}</TableCell>
+                                        <TableCell>{record.chan_doan}</TableCell>
+                                        <TableCell className="text-muted-foreground max-w-xs whitespace-pre-wrap">{record.don_thuoc}</TableCell>
+                                        <TableCell className="text-muted-foreground max-w-xs">{record.ghi_chu}</TableCell>
+                                        <TableCell>
+                                            {record.nhac_hen ? (
+                                                <div className='flex flex-col'>
+                                                    <Badge variant="secondary">{format(new Date(record.nhac_hen), 'dd/MM/yyyy HH:mm')}</Badge>
+                                                    <span className='text-xs text-muted-foreground mt-1'>{record.chan_doan}</span>
                                                 </div>
-                                                <Button variant="ghost" size="icon" onClick={() => openRecordForm(record)}>
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <p className='font-semibold'>Đơn thuốc:</p>
-                                                <p className="text-muted-foreground whitespace-pre-wrap">{record.don_thuoc}</p>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                            ) : '-'}
+                                        </TableCell>
+                                        <TableCell className="font-semibold">{record.chi_phi ? currencyFormatter.format(record.chi_phi) : '-'}</TableCell>
+                                        <TableCell>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                        <span className="sr-only">Mở menu</span>
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => openRecordForm(record)}>
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        Sửa bệnh án
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     ) : (
                         <div className="text-center py-12 text-muted-foreground">
                             <FileText className="mx-auto h-12 w-12" />
-                            <p className="mt-4">Chưa có lịch sử khám bệnh nào cho thú cưng này.</p>
+                            <p className="mt-4 font-semibold">Chưa có bệnh án nào</p>
+                            <p className="mt-1 text-sm">Hãy bắt đầu bằng cách thêm bệnh án đầu tiên cho {pet.ten}.</p>
                         </div>
                     )}
                 </CardContent>
@@ -156,8 +186,8 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
             {customer.pets && customer.pets.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {customer.pets.map(pet => (
-                        <Card key={pet.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => onSelectPet(pet)}>
-                            <CardHeader className="flex-row gap-4 items-center">
+                        <Card key={pet.id} className="cursor-pointer hover:border-primary transition-colors flex flex-col" >
+                            <CardHeader className="flex-row gap-4 items-center" onClick={() => onSelectPet(pet)}>
                                 <Avatar className="h-12 w-12">
                                     <AvatarImage src={`https://i.pravatar.cc/150?u=${pet.id}`} alt={pet.ten} />
                                     <AvatarFallback>{pet.ten.charAt(0)}</AvatarFallback>
@@ -170,7 +200,7 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
                                     <Edit className="h-4 w-4" />
                                 </Button>
                             </CardHeader>
-                            <CardContent className="grid grid-cols-2 gap-2 text-sm">
+                            <CardContent className="grid grid-cols-2 gap-2 text-sm" onClick={() => onSelectPet(pet)}>
                                 <div className="flex items-center gap-2">
                                     <Bone className="h-4 w-4 text-muted-foreground" />
                                     <span>{pet.can_nang ?? 'N/A'} kg</span>
@@ -180,6 +210,9 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
                                     <span>{pet.gioi_tinh ?? 'N/A'}</span>
                                 </div>
                             </CardContent>
+                             <div className="p-6 pt-0 mt-auto">
+                                <Button className="w-full" onClick={() => onSelectPet(pet)}>Xem bệnh án</Button>
+                            </div>
                         </Card>
                     ))}
                 </div>

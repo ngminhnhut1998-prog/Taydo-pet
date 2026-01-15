@@ -29,52 +29,76 @@ export const mockRecords: MedicalRecord[] = [
         id: 'rec_1', 
         thu_id: 'pet_1', 
         ngay_kham: subDays(now, 8).toISOString(),
+        can_nang_kham: 12.4,
+        trieu_chung: 'Ngứa, gãi nhiều, da mẩn đỏ',
         chan_doan: 'Viêm da dị ứng', 
         don_thuoc: 'Cetirizine 10mg (1 viên/ngày)\nDầu cá Omega-3 (1 viên/ngày)',
+        ghi_chu: 'Tái khám nếu triệu chứng không giảm',
         nhac_hen: formatISO(setHours(now, 14)), // Hôm nay
+        chi_phi: 350000,
     },
     { 
         id: 'rec_1a', 
         thu_id: 'pet_1', 
         ngay_kham: subDays(now, 90).toISOString(),
+        can_nang_kham: 11.8,
+        trieu_chung: 'Khỏe mạnh',
         chan_doan: 'Tiêm phòng dại', 
         don_thuoc: 'Vắc-xin Rabisin',
-        nhac_hen: null
+        ghi_chu: 'Theo dõi phản ứng sau tiêm',
+        nhac_hen: null,
+        chi_phi: 200000
     },
     // Records for Vàng (Mèo, cust_1)
     { 
         id: 'rec_2', 
         thu_id: 'pet_2', 
         ngay_kham: subDays(now, 9).toISOString(),
+        can_nang_kham: 4.2,
+        trieu_chung: 'Lắc đầu, tai có mùi hôi',
         chan_doan: 'Nhiễm trùng tai', 
         don_thuoc: 'Otomax Ear Drops (nhỏ 2 lần/ngày)',
+        ghi_chu: 'Vệ sinh tai hàng ngày',
         nhac_hen: null,
+        chi_phi: 300000,
     },
     // Records for Lu (Chó, cust_2)
     { 
         id: 'rec_3', 
         thu_id: 'pet_3', 
         ngay_kham: subDays(now, 20).toISOString(),
+        can_nang_kham: 6.8,
+        trieu_chung: 'Sức khỏe tốt',
         chan_doan: 'Kiểm tra sức khỏe định kỳ', 
         don_thuoc: 'Tẩy giun Drontal, tiêm phòng 7 bệnh',
+        ghi_chu: 'Hẹn tái khám tiêm nhắc lại sau 1 năm',
         nhac_hen: addDays(now, 30).toISOString(),
+        chi_phi: 750000,
     },
      // Records for MiMi (Mèo, cust_3)
     { 
         id: 'rec_4', 
         thu_id: 'pet_4', 
         ngay_kham: subDays(now, 4).toISOString(),
+        can_nang_kham: 5.1,
+        trieu_chung: 'Hắt hơi, chảy nước mũi',
         chan_doan: 'Cảm lạnh', 
         don_thuoc: 'Kháng sinh Amoxicillin, Vitamin C',
+        ghi_chu: 'Giữ ấm, cho ăn thức ăn mềm',
         nhac_hen: formatISO(setHours(now, 10)), // Hôm nay
+        chi_phi: 250000,
     },
     // Records for Rex (Chó, cust_4)
      { 
         id: 'rec_5', 
         thu_id: 'pet_5', 
         ngay_kham: subDays(now, 1).toISOString(),
+        can_nang_kham: 25,
+        trieu_chung: 'Nôn, bỏ ăn, tiêu chảy',
         chan_doan: 'Rối loạn tiêu hóa', 
         don_thuoc: 'Men tiêu hóa, thuốc chống nôn',
+        ghi_chu: 'Theo dõi tình trạng, cho uống nhiều nước',
         nhac_hen: formatISO(setHours(addDays(now, 1), 9)), // Ngày mai
+        chi_phi: 450000,
     },
 ];

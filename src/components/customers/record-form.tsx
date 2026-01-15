@@ -22,9 +22,13 @@ const formSchema = z.object({
   ngay_kham: z.date({
     required_error: "Ngày khám là bắt buộc.",
   }),
+  can_nang_kham: z.coerce.number().positive({ message: "Cân nặng phải là số dương."}).optional(),
+  trieu_chung: z.string().optional(),
   chan_doan: z.string().min(2, { message: "Chẩn đoán không được để trống." }),
   don_thuoc: z.string().min(2, { message: "Đơn thuốc không được để trống." }),
+  ghi_chu: z.string().optional(),
   nhac_hen: z.string().optional().nullable(),
+  chi_phi: z.coerce.number().min(0, { message: "Chi phí không được là số âm." }).optional(),
 });
 
 interface RecordFormProps {
@@ -40,9 +44,13 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
     resolver: zodResolver(formSchema),
     defaultValues: {
       ngay_kham: new Date(),
+      can_nang_kham: undefined,
+      trieu_chung: "",
       chan_doan: "",
       don_thuoc: "",
-      nhac_hen: ""
+      ghi_chu: "",
+      nhac_hen: "",
+      chi_phi: undefined,
     },
   });
 
@@ -51,22 +59,29 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
       form.reset({
         ...existingRecord,
         ngay_kham: new Date(existingRecord.ngay_kham),
-        nhac_hen: existingRecord.nhac_hen ? format(new Date(existingRecord.nhac_hen), "yyyy-MM-dd'T'HH:mm") : ""
+        nhac_hen: existingRecord.nhac_hen ? format(new Date(existingRecord.nhac_hen), "yyyy-MM-dd'T'HH:mm") : "",
+        can_nang_kham: existingRecord.can_nang_kham ?? undefined,
+        trieu_chung: existingRecord.trieu_chung ?? "",
+        ghi_chu: existingRecord.ghi_chu ?? "",
+        chi_phi: existingRecord.chi_phi ?? undefined,
       });
     } else {
         form.reset({
             ngay_kham: new Date(),
+            can_nang_kham: undefined,
+            trieu_chung: "",
             chan_doan: "",
             don_thuoc: "",
-            nhac_hen: ""
+            ghi_chu: "",
+            nhac_hen: "",
+            chi_phi: undefined,
         });
     }
   }, [existingRecord, form, isOpen]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const dataToSave = {
-        chan_doan: values.chan_doan,
-        don_thuoc: values.don_thuoc,
+        ...values,
         ngay_kham: values.ngay_kham.toISOString(),
         nhac_hen: values.nhac_hen ? new Date(values.nhac_hen).toISOString() : null,
     };
@@ -88,7 +103,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{existingRecord ? 'Sửa bệnh án' : 'Thêm bệnh án mới'}</DialogTitle>
            <DialogDescription>
@@ -96,44 +111,73 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-6">
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="ngay_kham"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                    <FormLabel>Ngày khám</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                            )}
+                            >
+                            {field.value ? (
+                                format(field.value, "dd/MM/yyyy")
+                            ) : (
+                                <span>Chọn một ngày</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                    control={form.control}
+                    name="can_nang_kham"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Cân nặng (kg)</FormLabel>
+                        <FormControl>
+                        <Input type="number" step="0.1" placeholder="5.5" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+
             <FormField
               control={form.control}
-              name="ngay_kham"
+              name="trieu_chung"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Ngày khám</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "dd/MM/yyyy")
-                          ) : (
-                            <span>Chọn một ngày</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                <FormItem>
+                  <FormLabel>Triệu chứng</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Bỏ ăn, nôn, đi ngoài..." {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -156,32 +200,60 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
               name="don_thuoc"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Đơn thuốc & Ghi chú</FormLabel>
+                  <FormLabel>Đơn thuốc</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Thuốc A: 2 viên/ngày..." rows={4} {...field} />
+                    <Textarea placeholder="Thuốc A: 2 viên/ngày..." rows={3} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
+             <FormField
               control={form.control}
-              name="nhac_hen"
+              name="ghi_chu"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Lịch tái khám (Tùy chọn)</FormLabel>
-                    <Input
-                        type="datetime-local"
-                        {...field}
-                        value={field.value || ''}
-                    />
-                  <FormDescription>Để trống nếu không có lịch hẹn.</FormDescription>
+                <FormItem>
+                  <FormLabel>Ghi chú</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Dặn dò thêm, lưu ý đặc biệt..." rows={2} {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="nhac_hen"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                    <FormLabel>Lịch tái khám</FormLabel>
+                        <Input
+                            type="datetime-local"
+                            {...field}
+                            value={field.value || ''}
+                        />
+                    <FormDescription className="text-xs">Để trống nếu không có lịch hẹn.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="chi_phi"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Chi phí (VND)</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="350000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
 
-            <DialogFooter>
+            <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Hủy</Button>
               <Button type="submit">Lưu bệnh án</Button>
             </DialogFooter>
