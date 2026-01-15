@@ -26,39 +26,38 @@ export default function AppointmentClientPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   const appointments = useLiveQuery(async () => {
-    let query = db.records.where('nhac_hen.ngay').above('');
-
-    if (dateRange?.from) {
-      const fromDate = startOfDay(dateRange.from).toISOString();
-      query = query.and(r => (r.nhac_hen || []).some(h => h.ngay >= fromDate));
-    }
-    if (dateRange?.to) {
-      const toDate = new Date(startOfDay(dateRange.to).getTime() + 24 * 60 * 60 * 1000).toISOString();
-      query = query.and(r => (r.nhac_hen || []).some(h => h.ngay < toDate));
-    }
-    
-    const records = await query.toArray();
+    // 1. Get all records first, as querying multi-entry indexes with complex criteria is tricky.
+    const allRecords = await db.records.toArray();
 
     let allAppointments: FullAppointmentInfo[] = [];
 
-    for (const record of records) {
-        if (record.nhac_hen) {
-            for (const app of record.nhac_hen) {
-                 // Filter appointments within the date range again, as the query is on record level
-                const appDate = new Date(app.ngay);
-                if (
-                    (!dateRange?.from || appDate >= startOfDay(dateRange.from)) &&
-                    (!dateRange?.to || appDate < startOfDay(dateRange.to).getTime() + 24 * 60 * 60 * 1000)
-                ) {
-                    const pet = await db.pets.get(record.thu_id);
-                    const customer = pet ? await db.customers.get(pet.khach_hang_id) : undefined;
-                    allAppointments.push({ record, appointment: app, pet, customer });
-                }
+    // 2. Manually filter and flatten the appointments in TypeScript.
+    for (const record of allRecords) {
+      if (record.nhac_hen && Array.isArray(record.nhac_hen)) {
+        for (const app of record.nhac_hen) {
+          // Ensure appointment and its date are valid
+          if (app && app.ngay) {
+            const appDate = new Date(app.ngay);
+            
+            // Check if the appointment falls within the selected date range
+            const fromDate = dateRange?.from ? startOfDay(dateRange.from) : null;
+            const toDate = dateRange?.to ? startOfDay(dateRange.to) : null;
+            
+            const isInRange = 
+              (!fromDate || appDate >= fromDate) &&
+              (!toDate || appDate <= toDate);
+
+            if (isInRange) {
+              const pet = await db.pets.get(record.thu_id);
+              const customer = pet ? await db.customers.get(pet.khach_hang_id) : undefined;
+              allAppointments.push({ record, appointment: app, pet, customer });
             }
+          }
         }
+      }
     }
     
-    // Sort by date
+    // 3. Sort the flattened list by date.
     allAppointments.sort((a, b) => new Date(a.appointment.ngay).getTime() - new Date(b.appointment.ngay).getTime());
 
     return allAppointments;
