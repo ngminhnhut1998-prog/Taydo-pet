@@ -86,7 +86,7 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
                                     <TableHead>Đơn thuốc</TableHead>
                                     <TableHead>Bán kèm</TableHead>
                                     <TableHead>Ghi chú</TableHead>
-                                    <TableHead>Tái khám</TableHead>
+                                    <TableHead>Nhắc hẹn</TableHead>
                                     <TableHead>Chi phí</TableHead>
                                     <TableHead><span className="sr-only">Actions</span></TableHead>
                                 </TableRow>
@@ -105,7 +105,7 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
                                             {record.nhac_hen ? (
                                                 <div className='flex flex-col'>
                                                     <Badge variant="secondary">{format(new Date(record.nhac_hen), 'dd/MM/yyyy HH:mm')}</Badge>
-                                                    <span className='text-xs text-muted-foreground mt-1'>{record.chan_doan}</span>
+                                                    <span className='text-xs text-muted-foreground mt-1'>{record.noi_dung_hen}</span>
                                                 </div>
                                             ) : '-'}
                                         </TableCell>

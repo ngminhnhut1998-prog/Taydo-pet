@@ -127,7 +127,7 @@ export default function AppointmentClientPage() {
                   </TableCell>
                   <TableCell>{pet?.ten || 'Không rõ'}</TableCell>
                   <TableCell className="text-muted-foreground">{customer?.so_dien_thoai || ''}</TableCell>
-                  <TableCell className="text-muted-foreground">{record.chan_doan}</TableCell>
+                  <TableCell className="text-muted-foreground">{record.noi_dung_hen}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

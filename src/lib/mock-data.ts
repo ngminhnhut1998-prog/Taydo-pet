@@ -36,6 +36,7 @@ export const mockRecords: MedicalRecord[] = [
         ban_kem: 'Vòng cổ chống ve',
         ghi_chu: 'Tái khám nếu triệu chứng không giảm',
         nhac_hen: formatISO(setHours(now, 14)), // Hôm nay
+        noi_dung_hen: 'Tái khám da',
         chi_phi: 350000,
     },
     { 
@@ -49,6 +50,7 @@ export const mockRecords: MedicalRecord[] = [
         ban_kem: 'Sữa tắm',
         ghi_chu: 'Theo dõi phản ứng sau tiêm',
         nhac_hen: null,
+        noi_dung_hen: '',
         chi_phi: 200000
     },
     // Records for Vàng (Mèo, cust_1)
@@ -63,6 +65,7 @@ export const mockRecords: MedicalRecord[] = [
         ban_kem: '',
         ghi_chu: 'Vệ sinh tai hàng ngày',
         nhac_hen: null,
+        noi_dung_hen: '',
         chi_phi: 300000,
     },
     // Records for Lu (Chó, cust_2)
@@ -77,6 +80,7 @@ export const mockRecords: MedicalRecord[] = [
         ban_kem: 'Thức ăn hạt Royal Canin',
         ghi_chu: 'Hẹn tái khám tiêm nhắc lại sau 1 năm',
         nhac_hen: addDays(now, 30).toISOString(),
+        noi_dung_hen: 'Tiêm nhắc lại vắc-xin',
         chi_phi: 750000,
     },
      // Records for MiMi (Mèo, cust_3)
@@ -91,6 +95,7 @@ export const mockRecords: MedicalRecord[] = [
         ban_kem: '',
         ghi_chu: 'Giữ ấm, cho ăn thức ăn mềm',
         nhac_hen: formatISO(setHours(now, 10)), // Hôm nay
+        noi_dung_hen: 'Tái khám hô hấp',
         chi_phi: 250000,
     },
     // Records for Rex (Chó, cust_4)
@@ -105,6 +110,7 @@ export const mockRecords: MedicalRecord[] = [
         ban_kem: 'Pate lon cho chó',
         ghi_chu: 'Theo dõi tình trạng, cho uống nhiều nước',
         nhac_hen: formatISO(setHours(addDays(now, 1), 9)), // Ngày mai
+        noi_dung_hen: 'Tái khám tiêu hóa',
         chi_phi: 450000,
     },
 ];

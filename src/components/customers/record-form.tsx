@@ -29,6 +29,7 @@ const formSchema = z.object({
   ban_kem: z.string().optional(),
   ghi_chu: z.string().optional(),
   nhac_hen: z.string().optional().nullable(),
+  noi_dung_hen: z.string().optional(),
   chi_phi: z.coerce.number().min(0, { message: "Chi phí không được là số âm." }).optional(),
 });
 
@@ -52,6 +53,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
       ban_kem: "",
       ghi_chu: "",
       nhac_hen: "",
+      noi_dung_hen: "",
       chi_phi: undefined,
     },
   });
@@ -62,6 +64,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
         ...existingRecord,
         ngay_kham: new Date(existingRecord.ngay_kham),
         nhac_hen: existingRecord.nhac_hen ? format(new Date(existingRecord.nhac_hen), "yyyy-MM-dd'T'HH:mm") : "",
+        noi_dung_hen: existingRecord.noi_dung_hen ?? "",
         can_nang_kham: existingRecord.can_nang_kham ?? undefined,
         trieu_chung: existingRecord.trieu_chung ?? "",
         ban_kem: existingRecord.ban_kem ?? "",
@@ -78,6 +81,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
             ban_kem: "",
             ghi_chu: "",
             nhac_hen: "",
+            noi_dung_hen: "",
             chi_phi: undefined,
         });
     }
@@ -238,37 +242,54 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
                 </FormItem>
               )}
             />
-             <div className="grid grid-cols-2 gap-4">
-                <FormField
-                control={form.control}
-                name="nhac_hen"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                    <FormLabel>Lịch tái khám</FormLabel>
-                        <Input
-                            type="datetime-local"
-                            {...field}
-                            value={field.value || ''}
-                        />
-                    <FormDescription className="text-xs">Để trống nếu không có lịch hẹn.</FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                 <FormField
+             <div className="space-y-2">
+                <FormLabel>Nhắc hẹn</FormLabel>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
                     control={form.control}
-                    name="chi_phi"
+                    name="nhac_hen"
                     render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Chi phí (VND)</FormLabel>
-                        <FormControl>
-                        <Input type="number" placeholder="350000" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
+                        <FormItem>
+                            <FormControl>
+                                <Input
+                                    type="datetime-local"
+                                    {...field}
+                                    value={field.value || ''}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
                     )}
-                />
+                    />
+                    <FormField
+                    control={form.control}
+                    name="noi_dung_hen"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                            <Input placeholder="Nội dung hẹn (tái khám, tiêm, ...)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
+                 <FormDescription className="text-xs px-1">Để trống nếu không có lịch hẹn.</FormDescription>
             </div>
+
+            <FormField
+                control={form.control}
+                name="chi_phi"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Chi phí (VND)</FormLabel>
+                    <FormControl>
+                    <Input type="number" placeholder="350000" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
 
             <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Hủy</Button>

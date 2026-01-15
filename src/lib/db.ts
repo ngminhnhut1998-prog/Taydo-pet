@@ -33,6 +33,7 @@ export interface MedicalRecord {
   ban_kem?: string;
   ghi_chu?: string;
   nhac_hen?: string | null;
+  noi_dung_hen?: string;
   chi_phi?: number;
   thu_id: string;
   created?: string;
@@ -56,6 +57,18 @@ class VetClinicDB extends Dexie {
 
   constructor() {
     super('VetClinicDB');
+    this.version(5).stores({
+      customers: 'id, ten, so_dien_thoai',
+      pets: 'id, ten, khach_hang_id',
+      records: 'id, thu_id, ngay_kham, nhac_hen',
+      syncQueue: '++id, timestamp',
+    }).upgrade(tx => {
+        console.log("Upgrading database to version 5");
+        return tx.table('records').toCollection().modify(record => {
+            if (record.noi_dung_hen === undefined) record.noi_dung_hen = record.chan_doan;
+        });
+    });
+
     this.version(4).stores({
       customers: 'id, ten, so_dien_thoai',
       pets: 'id, ten, khach_hang_id',
