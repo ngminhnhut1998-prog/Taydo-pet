@@ -3,8 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { Home, Users, HeartPulse, Calendar, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, Users, HeartPulse, Calendar, FileBarChart, LogOut, Moon, Sun, Settings } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,63 +20,56 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
-import { useOnlineStatus } from '@/hooks/use-online-status';
-import { processSyncQueue, syncAllData } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/db';
-import { Badge } from './ui/badge';
+import { db, seedDatabase, clearDatabase } from '@/lib/db';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isOnline = useOnlineStatus();
   const { toast } = useToast();
   const [isSyncing, setIsSyncing] = React.useState(false);
-  const syncQueueCount = useLiveQuery(() => db.syncQueue.count(), []);
 
-  const handleSync = async () => {
-    if (!isOnline) {
-      toast({
-        title: 'Offline',
-        description: 'Không thể đồng bộ khi không có kết nối mạng.',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const customerCount = useLiveQuery(() => db.customers.count(), []);
 
+  const handleSeed = async () => {
     setIsSyncing(true);
     try {
-      await processSyncQueue();
-      await syncAllData();
+      await clearDatabase();
+      await seedDatabase();
       toast({
-        title: 'Đồng bộ thành công',
-        description: 'Dữ liệu của bạn đã được cập nhật.',
+        title: 'Tạo dữ liệu giả thành công',
+        description: 'Cơ sở dữ liệu đã được làm mới với dữ liệu mẫu.',
       });
     } catch (error) {
       console.error(error);
       toast({
-        title: 'Lỗi đồng bộ',
-        description: 'Đã có lỗi xảy ra. Vui lòng thử lại.',
+        title: 'Lỗi tạo dữ liệu',
+        description: 'Không thể tạo dữ liệu giả. Vui lòng thử lại.',
         variant: 'destructive',
       });
     } finally {
       setIsSyncing(false);
     }
   };
-  
+
+  // Seed data on initial load if db is empty
   React.useEffect(() => {
-    if(isOnline){
-      handleSync();
+    if (customerCount === 0) {
+      handleSeed();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline]);
+  }, [customerCount]);
+
 
   return (
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader className="p-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/dashboard" className="flex items-center gap-3">
             <Logo className="w-8 h-8 text-primary" />
-            <span className="text-lg font-semibold">Thú Cưng Yêu</span>
+            <span className="text-xl font-bold">PetCare</span>
           </Link>
         </SidebarHeader>
         <SidebarContent>
@@ -85,7 +77,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarMenuItem>
               <Link href="/dashboard" legacyBehavior passHref>
                 <SidebarMenuButton isActive={pathname === '/dashboard'}>
-                  <Home />
+                  <LayoutDashboard />
                   Bảng điều khiển
                 </SidebarMenuButton>
               </Link>
@@ -98,7 +90,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
-            <SidebarMenuItem>
+             <SidebarMenuItem>
               <Link href="/lich-hen" legacyBehavior passHref>
                 <SidebarMenuButton isActive={pathname === '/lich-hen'}>
                   <Calendar />
@@ -106,41 +98,75 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/reports" legacyBehavior passHref>
+                <SidebarMenuButton isActive={pathname === '/reports'}>
+                  <FileBarChart />
+                  Báo cáo
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter className="p-4">
-          {/* Footer content if needed */}
+        <SidebarFooter className="p-4 flex flex-col gap-2">
+           <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton>
+                <Settings />
+                Cài đặt
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+               <SidebarMenuButton>
+                  <LogOut />
+                  Đăng xuất
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-4">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-lg sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-4">
           <SidebarTrigger className="md:hidden" />
           <div className="flex items-center gap-4 ml-auto">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              {isOnline ? (
-                <>
-                  <Wifi className="h-4 w-4 text-green-500" />
-                  <span>Online</span>
-                </>
-              ) : (
-                <>
-                  <WifiOff className="h-4 w-4 text-red-500" />
-                  <span>Offline</span>
-                </>
-              )}
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleSync}
-              disabled={isSyncing || !isOnline}
-            >
-              <RefreshCw className={cn('h-4 w-4', isSyncing && 'animate-spin')} />
-              <span className="sr-only">Đồng bộ</span>
+             <Button variant="ghost" size="icon" className="md:hidden">
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
             </Button>
-            {syncQueueCount && syncQueueCount > 0 ? (
-                 <Badge variant="destructive">{syncQueueCount}</Badge>
-            ) : null}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSeed}
+              disabled={isSyncing}
+            >
+              {isSyncing ? 'Đang tải...' : 'Làm mới dữ liệu giả'}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Dr. Minh" />
+                    <AvatarFallback>DM</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">BS. Minh</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      minh.vet@email.com
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Đăng xuất</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
         <main className="flex-1 p-4 sm:px-6">{children}</main>

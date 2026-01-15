@@ -1,149 +1,62 @@
-import PocketBase from 'pocketbase';
-import { db, type Customer, type Pet, type MedicalRecord, type SyncQueueItem } from './db';
+import { db, type Customer, type Pet, type MedicalRecord } from './db';
 
-const POCKETBASE_URL = 'http://127.0.0.1:8090';
-export const pb = new PocketBase(POCKETBASE_URL);
+// --- MOCK API FUNCTIONS ---
+// These functions simulate API calls by interacting directly with Dexie.
+// In a real application, you would replace these with actual API calls to a backend (like PocketBase).
 
-// --- SYNC FUNCTIONS ---
-export async function syncAllData() {
-  console.log('Syncing all data from PocketBase...');
-  await Promise.all([syncCustomers(), syncPets(), syncRecords()]);
-  console.log('Sync complete.');
-}
-
-async function syncCustomers() {
-  const records = await pb.collection('customers').getFullList<Customer>({ sort: '-created' });
-  await db.customers.bulkPut(records);
-}
-
-async function syncPets() {
-  const records = await pb.collection('pets').getFullList<Pet>({ sort: '-created' });
-  await db.pets.bulkPut(records);
-}
-
-async function syncRecords() {
-  const records = await pb.collection('records').getFullList<MedicalRecord>({ sort: '-created' });
-  await db.records.bulkPut(records);
-}
-
-// --- OFFLINE QUEUE ---
-async function queueOperation(
-  collection: SyncQueueItem['collection'],
-  action: SyncQueueItem['action'],
-  payload: any,
-  tempId?: string
-) {
-  await db.syncQueue.add({
-    collection,
-    action,
-    payload,
-    tempId,
-    timestamp: Date.now(),
-  });
-}
-
-export async function processSyncQueue() {
-  const queueItems = await db.syncQueue.orderBy('timestamp').toArray();
-  if (queueItems.length === 0) {
-    return;
-  }
-  
-  console.log(`Processing ${queueItems.length} items from sync queue...`);
-  
-  for (const item of queueItems) {
-    try {
-      if (item.action === 'create') {
-        const createdRecord = await pb.collection(item.collection).create(item.payload);
-        // If there was a temporary ID, we need to update our local database
-        if (item.tempId) {
-          if (item.collection === 'customers') {
-            const oldRecord = await db.customers.get(item.tempId);
-            if (oldRecord) {
-              await db.customers.delete(item.tempId);
-              await db.customers.add({ ...createdRecord } as Customer);
-            }
-          }
-           // Similar logic for pets and records
-        }
-      } else if (item.action === 'update') {
-        await pb.collection(item.collection).update(item.payload.id, item.payload.data);
-      } else if (item.action === 'delete') {
-        await pb.collection(item.collection).delete(item.payload.id);
-      }
-      
-      // If successful, remove from queue
-      await db.syncQueue.delete(item.id!);
-    } catch (error) {
-      console.error(`Failed to process queue item ${item.id}:`, error);
-      // Stop processing on failure to maintain order
-      return; 
-    }
-  }
-  
-  console.log('Sync queue processed.');
-  // Re-sync all data to ensure consistency
-  await syncAllData();
-}
-
-// --- CRUD OPERATIONS ---
-// Each function follows a pattern:
-// 1. Try to perform the operation on PocketBase if online.
-// 2. On success, update the local Dexie DB.
-// 3. If offline or PB fails, queue the operation and perform an optimistic update on Dexie.
-
-const createCrudOperations = <T extends { id: string }>(collectionName: SyncQueueItem['collection'], table: any) => {
+const createMockApiOperations = <T extends { id: string }>(table: Dexie.Table<T, string>) => {
   return {
     async create(data: Omit<T, 'id' | 'created' | 'updated'>): Promise<T> {
-      if (navigator.onLine) {
-        try {
-          const newRecord = await pb.collection(collectionName).create(data);
-          await table.put(newRecord);
-          return newRecord as T;
-        } catch (e) {
-          console.error("PB create failed, queuing...", e);
-        }
-      }
-      const tempId = `offline_${Date.now()}`;
-      const optimisticRecord = { ...data, id: tempId } as T;
-      await table.put(optimisticRecord);
-      await queueOperation(collectionName, 'create', data, tempId);
-      return optimisticRecord;
+      console.log(`[Mock API] Creating record in ${table.name}`);
+      const newId = `mock_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const newRecord = {
+        ...data,
+        id: newId,
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+      } as T;
+      await db.transaction('rw', table, async () => {
+        await table.add(newRecord);
+      });
+      console.log(`[Mock API] Record created with id: ${newId}`);
+      return newRecord;
     },
 
-    async update(id: string, data: Partial<T>): Promise<T> {
-      if (navigator.onLine) {
-        try {
-          const updatedRecord = await pb.collection(collectionName).update(id, data);
-          await table.put(updatedRecord);
-          return updatedRecord as T;
-        } catch (e) {
-           console.error("PB update failed, queuing...", e);
-        }
+    async update(id: string, data: Partial<Omit<T, 'id' | 'created'>>): Promise<T> {
+      console.log(`[Mock API] Updating record ${id} in ${table.name}`);
+      const dataWithUpdated = {
+        ...data,
+        updated: new Date().toISOString(),
+      };
+      await table.update(id, dataWithUpdated);
+      const updatedRecord = await table.get(id);
+      if (!updatedRecord) {
+        throw new Error("Record not found after optimistic update");
       }
-      const updatedOptimistic = await table.update(id, data);
-      if(updatedOptimistic) {
-        await queueOperation(collectionName, 'update', { id, data });
-        return await table.get(id);
-      }
-      throw new Error("Record not found for optimistic update");
+       console.log(`[Mock API] Record ${id} updated`);
+      return updatedRecord;
     },
     
     async delete(id: string): Promise<void> {
-        if (navigator.onLine) {
-            try {
-              await pb.collection(collectionName).delete(id);
-              await table.delete(id);
-              return;
-            } catch (e) {
-                console.error("PB delete failed, queuing...", e);
-            }
-        }
-        await table.delete(id);
-        await queueOperation(collectionName, 'delete', { id });
-    }
+      console.log(`[Mock API] Deleting record ${id} from ${table.name}`);
+      await table.delete(id);
+      console.log(`[Mock API] Record ${id} deleted`);
+    },
   };
 };
 
-export const customerApi = createCrudOperations<Customer>('customers', db.customers);
-export const petApi = createCrudOperations<Pet>('pets', db.pets);
-export const recordApi = createCrudOperations<MedicalRecord>('records', db.records);
+export const customerApi = createMockApiOperations<Customer>(db.customers);
+export const petApi = createMockApiOperations<Pet>(db.pets);
+export const recordApi = createMockApiOperations<MedicalRecord>(db.records);
+
+// --- SYNC FUNCTIONS (Placeholder) ---
+// These functions are no longer needed with mock data but are kept for future re-integration.
+export async function syncAllData() {
+  console.log('Syncing is disabled in mock mode.');
+  return Promise.resolve();
+}
+
+export async function processSyncQueue() {
+   console.log('Sync queue processing is disabled in mock mode.');
+  return Promise.resolve();
+}

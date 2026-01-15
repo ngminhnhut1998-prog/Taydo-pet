@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, formatISO } from 'date-fns';
 import { recordApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import type { MedicalRecord } from '@/lib/db';
@@ -24,7 +24,7 @@ const formSchema = z.object({
   }),
   chan_doan: z.string().min(2, { message: "Chẩn đoán không được để trống." }),
   don_thuoc: z.string().min(2, { message: "Đơn thuốc không được để trống." }),
-  nhac_hen: z.date().optional().nullable(),
+  nhac_hen: z.string().optional().nullable(),
 });
 
 interface RecordFormProps {
@@ -42,7 +42,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
       ngay_kham: new Date(),
       chan_doan: "",
       don_thuoc: "",
-      nhac_hen: null
+      nhac_hen: ""
     },
   });
 
@@ -51,24 +51,26 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
       form.reset({
         ...existingRecord,
         ngay_kham: new Date(existingRecord.ngay_kham),
-        nhac_hen: existingRecord.nhac_hen ? new Date(existingRecord.nhac_hen) : null
+        nhac_hen: existingRecord.nhac_hen ? format(new Date(existingRecord.nhac_hen), "yyyy-MM-dd'T'HH:mm") : ""
       });
     } else {
         form.reset({
             ngay_kham: new Date(),
             chan_doan: "",
             don_thuoc: "",
-            nhac_hen: null
+            nhac_hen: ""
         });
     }
   }, [existingRecord, form, isOpen]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const dataToSave = {
-        ...values,
+        chan_doan: values.chan_doan,
+        don_thuoc: values.don_thuoc,
         ngay_kham: values.ngay_kham.toISOString(),
-        nhac_hen: values.nhac_hen ? values.nhac_hen.toISOString() : null,
+        nhac_hen: values.nhac_hen ? new Date(values.nhac_hen).toISOString() : null,
     };
+
     try {
       if (existingRecord) {
         await recordApi.update(existingRecord.id, dataToSave);
@@ -170,8 +172,8 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
                   <FormLabel>Lịch tái khám (Tùy chọn)</FormLabel>
                     <Input
                         type="datetime-local"
-                        value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ''}
-                        onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                        {...field}
+                        value={field.value || ''}
                     />
                   <FormDescription>Để trống nếu không có lịch hẹn.</FormDescription>
                   <FormMessage />
