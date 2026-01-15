@@ -135,12 +135,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <span className="sr-only">Toggle theme</span>
             </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={handleSeed}
               disabled={isSyncing}
             >
-              {isSyncing ? 'Đang tải...' : 'Làm mới dữ liệu giả'}
+              {isSyncing ? 'Đang tải...' : 'Làm mới dữ liệu'}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

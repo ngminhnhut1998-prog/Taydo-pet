@@ -36,10 +36,12 @@ export function CustomerForm({ isOpen, setIsOpen, existingCustomer }: CustomerFo
   });
 
   useEffect(() => {
-    if (existingCustomer) {
-      form.reset(existingCustomer);
-    } else {
-      form.reset({ ten: "", so_dien_thoai: "", dia_chi: "" });
+    if (isOpen) {
+      if (existingCustomer) {
+        form.reset(existingCustomer);
+      } else {
+        form.reset({ ten: "", so_dien_thoai: "", dia_chi: "" });
+      }
     }
   }, [existingCustomer, form, isOpen]);
 

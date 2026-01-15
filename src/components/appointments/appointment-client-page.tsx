@@ -12,7 +12,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 
 interface FullAppointmentInfo {
@@ -131,13 +130,7 @@ export default function AppointmentClientPage() {
                       <Badge variant="secondary">{format(new Date(appointment.ngay), 'dd/MM/yyyy')}</Badge>
                   </TableCell>
                   <TableCell>
-                      <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9 hidden sm:flex">
-                              <AvatarImage src={`https://i.pravatar.cc/150?u=${customer?.id}`} alt={customer?.ten} />
-                              <AvatarFallback>{customer?.ten.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{customer?.ten || 'Không rõ'}</span>
-                      </div>
+                      <div className="font-medium">{customer?.ten || 'Không rõ'}</div>
                   </TableCell>
                   <TableCell>{pet?.ten || 'Không rõ'}</TableCell>
                   <TableCell className="text-muted-foreground">{customer?.so_dien_thoai || ''}</TableCell>

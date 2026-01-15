@@ -13,7 +13,6 @@ import { vi } from 'date-fns/locale';
 import { CustomerForm } from './customer-form';
 import { PetForm } from './pet-form';
 import { RecordForm } from './record-form';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
@@ -53,10 +52,6 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
                     Quay lại danh sách thú cưng
                 </Button>
                 <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
-                        <AvatarImage src={`https://i.pravatar.cc/150?u=${pet.id}`} alt={pet.ten} />
-                        <AvatarFallback>{pet.ten.charAt(0)}</AvatarFallback>
-                    </Avatar>
                     <div>
                         <h1 className="text-3xl font-bold">{pet.ten}</h1>
                         <p className="text-muted-foreground">{pet.loai_thu} - {pet.giong}</p>
@@ -171,10 +166,6 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
                     Quay lại danh sách khách hàng
                 </Button>
                 <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
-                        <AvatarImage src={`https://i.pravatar.cc/150?u=${customer.id}`} alt={customer.ten} />
-                        <AvatarFallback>{customer.ten.charAt(0)}</AvatarFallback>
-                    </Avatar>
                     <div>
                         <h1 className="text-3xl font-bold">{customer.ten}</h1>
                         <p className="text-muted-foreground">{customer.so_dien_thoai} - {customer.dia_chi}</p>
@@ -194,10 +185,6 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
                     {customer.pets.map(pet => (
                         <Card key={pet.id} className="cursor-pointer hover:border-primary transition-colors flex flex-col" >
                             <CardHeader className="flex-row gap-4 items-center" onClick={() => onSelectPet(pet)}>
-                                <Avatar className="h-12 w-12">
-                                    <AvatarImage src={`https://i.pravatar.cc/150?u=${pet.id}`} alt={pet.ten} />
-                                    <AvatarFallback>{pet.ten.charAt(0)}</AvatarFallback>
-                                </Avatar>
                                 <div>
                                     <CardTitle>{pet.ten}</CardTitle>
                                     <p className="text-sm text-muted-foreground">{pet.giong}</p>
@@ -313,13 +300,7 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                                 {customers.map(customer => (
                                     <TableRow key={customer.id} onClick={() => onSelectCustomer(customer)} className="cursor-pointer">
                                         <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                <Avatar className="h-9 w-9 hidden sm:flex">
-                                                    <AvatarImage src={`https://i.pravatar.cc/150?u=${customer.id}`} alt={customer.ten} />
-                                                    <AvatarFallback>{customer.ten.charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                                <span className="font-medium">{customer.ten}</span>
-                                            </div>
+                                            <div className="font-medium">{customer.ten}</div>
                                         </TableCell>
                                         <TableCell>{customer.so_dien_thoai}</TableCell>
                                         <TableCell className="text-muted-foreground max-w-xs truncate">{customer.dia_chi}</TableCell>

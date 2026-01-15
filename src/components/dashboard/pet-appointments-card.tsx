@@ -4,7 +4,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
 import { db, type Pet } from '@/lib/db';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PawPrint, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -39,10 +38,6 @@ export function PetAppointmentsCard() {
           <div className="space-y-4">
             {pets.map((pet) => (
               <div key={pet.id} className="flex items-center gap-4">
-                <Avatar className="h-10 w-10">
-                    <AvatarImage src={`https://i.pravatar.cc/150?u=${pet.id}`} alt={pet.ten} />
-                    <AvatarFallback>{pet.ten.charAt(0)}</AvatarFallback>
-                </Avatar>
                 <div className="flex-1">
                   <p className="font-medium">{pet.ten}</p>
                   <p className="text-sm text-muted-foreground">{pet.loai_thu} - {pet.giong}</p>
