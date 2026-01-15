@@ -56,14 +56,14 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
       can_nang_kham: undefined,
       trieu_chung: "",
       chan_doan: "",
-      chi_phi_chan_doan: 0,
+      chi_phi_chan_doan: undefined,
       don_thuoc: "",
-      chi_phi_don_thuoc: 0,
+      chi_phi_don_thuoc: undefined,
       ban_kem: "",
-      chi_phi_ban_kem: 0,
+      chi_phi_ban_kem: undefined,
       ghi_chu: "",
       nhac_hen: [],
-      chi_phi: 0,
+      chi_phi: undefined,
     },
   });
 
@@ -77,7 +77,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
   const costProducts = form.watch('chi_phi_ban_kem');
 
   useEffect(() => {
-    const total = (costDiagnosis || 0) + (costPrescription || 0) + (costProducts || 0);
+    const total = (Number(costDiagnosis) || 0) + (Number(costPrescription) || 0) + (Number(costProducts) || 0);
     form.setValue('chi_phi', total);
   }, [costDiagnosis, costPrescription, costProducts, form]);
 
@@ -95,9 +95,9 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
           trieu_chung: existingRecord.trieu_chung ?? "",
           ban_kem: existingRecord.ban_kem ?? "",
           ghi_chu: existingRecord.ghi_chu ?? "",
-          chi_phi_chan_doan: existingRecord.chi_phi_chan_doan ?? 0,
-          chi_phi_don_thuoc: existingRecord.chi_phi_don_thuoc ?? 0,
-          chi_phi_ban_kem: existingRecord.chi_phi_ban_kem ?? 0,
+          chi_phi_chan_doan: existingRecord.chi_phi_chan_doan ?? undefined,
+          chi_phi_don_thuoc: existingRecord.chi_phi_don_thuoc ?? undefined,
+          chi_phi_ban_kem: existingRecord.chi_phi_ban_kem ?? undefined,
           chi_phi: existingRecord.chi_phi ?? undefined,
         });
       } else {
@@ -106,14 +106,14 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
               can_nang_kham: undefined,
               trieu_chung: "",
               chan_doan: "",
-              chi_phi_chan_doan: 0,
+              chi_phi_chan_doan: undefined,
               don_thuoc: "",
-              chi_phi_don_thuoc: 0,
+              chi_phi_don_thuoc: undefined,
               ban_kem: "",
-              chi_phi_ban_kem: 0,
+              chi_phi_ban_kem: undefined,
               ghi_chu: "",
               nhac_hen: [],
-              chi_phi: 0,
+              chi_phi: undefined,
           });
       }
     }
