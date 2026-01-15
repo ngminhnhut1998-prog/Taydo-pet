@@ -8,6 +8,7 @@ import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReportFilters } from "@/components/reports/report-filters";
+import { DailyRevenueList } from "@/components/reports/daily-revenue-list";
 
 export default function ReportsPage() {
     const today = new Date();
@@ -55,6 +56,7 @@ export default function ReportsPage() {
                             <RevenueChart mode="daily" year={dailyFilter.year} month={dailyFilter.month} />
                         </CardContent>
                     </Card>
+                    <DailyRevenueList year={dailyFilter.year} month={dailyFilter.month} />
                 </TabsContent>
 
                  <TabsContent value="month" className="space-y-4">
