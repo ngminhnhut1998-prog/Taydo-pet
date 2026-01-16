@@ -36,10 +36,12 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(values.email, values.password);
-      // Using window.location.href to force a full page navigation.
-      // This ensures the new cookie is sent to the server for the next request,
-      // allowing the middleware to grant access.
-      window.location.href = '/dashboard';
+      // A small delay prevents a race condition with the middleware.
+      // This ensures the auth cookie is set before the browser navigates,
+      // preventing a redirect loop back to the login page.
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 100);
     } catch (err: any) {
       console.error("Lỗi đăng nhập chi tiết:", err);
       if (err?.data?.message?.includes("Failed to authenticate")) {
@@ -47,8 +49,7 @@ export default function LoginPage() {
       } else {
         setError("Đã xảy ra lỗi kết nối hoặc lỗi không xác định. Vui lòng thử lại.");
       }
-    } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   }
 
