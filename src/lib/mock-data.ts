@@ -12,15 +12,15 @@ export const mockCustomers: Customer[] = [
 
 export const mockPets: Pet[] = [
     // Pets for Nguyễn Văn An
-    { id: 'pet_1', ten: 'Mực', loai_thu: 'Chó', giong: 'Cỏ', khach_hang_id: 'cust_1', can_nang: 12.5, gioi_tinh: 'Đực', created: subDays(now, 10).toISOString() },
-    { id: 'pet_2', ten: 'Vàng', loai_thu: 'Mèo', giong: 'Ta', khach_hang_id: 'cust_1', can_nang: 4.2, gioi_tinh: 'Cái', created: subDays(now, 10).toISOString() },
+    { id: 'pet_1', ten: 'Mực', loai_thu: 'Chó', giong: 'Cỏ', khach_hang_id: 'cust_1', can_nang: 12.5, gioi_tinh: 'Đực', mau_long: 'Đen', tuoi: 3, created: subDays(now, 10).toISOString() },
+    { id: 'pet_2', ten: 'Vàng', loai_thu: 'Mèo', giong: 'Ta', khach_hang_id: 'cust_1', can_nang: 4.2, gioi_tinh: 'Cái', mau_long: 'Vàng', tuoi: 2, created: subDays(now, 10).toISOString() },
     // Pets for Trần Thị Bình
-    { id: 'pet_3', ten: 'Lu', loai_thu: 'Chó', giong: 'Poodle', khach_hang_id: 'cust_2', can_nang: 6.8, gioi_tinh: 'Đực', created: subDays(now, 25).toISOString() },
+    { id: 'pet_3', ten: 'Lu', loai_thu: 'Chó', giong: 'Poodle', khach_hang_id: 'cust_2', can_nang: 6.8, gioi_tinh: 'Đực', mau_long: 'Trắng', tuoi: 1, created: subDays(now, 25).toISOString() },
     // Pets for Lê Hoàng Cường
-    { id: 'pet_4', ten: 'MiMi', loai_thu: 'Mèo', giong: 'Anh lông ngắn', khach_hang_id: 'cust_3', can_nang: 5.1, gioi_tinh: 'Cái', created: subDays(now, 5).toISOString() },
+    { id: 'pet_4', ten: 'MiMi', loai_thu: 'Mèo', giong: 'Anh lông ngắn', khach_hang_id: 'cust_3', can_nang: 5.1, gioi_tinh: 'Cái', mau_long: 'Xám', tuoi: 4, created: subDays(now, 5).toISOString() },
     // Pets for Phạm Thị Dung
-    { id: 'pet_5', ten: 'Rex', loai_thu: 'Chó', giong: 'Husky', khach_hang_id: 'cust_4', can_nang: 25, gioi_tinh: 'Đực', created: subDays(now, 40).toISOString() },
-    { id: 'pet_6', ten: 'Bông', loai_thu: 'Mèo', giong: 'Ba Tư', khach_hang_id: 'cust_4', can_nang: 4.8, gioi_tinh: 'Cái', created: subDays(now, 40).toISOString() },
+    { id: 'pet_5', ten: 'Rex', loai_thu: 'Chó', giong: 'Husky', khach_hang_id: 'cust_4', can_nang: 25, gioi_tinh: 'Đực', mau_long: 'Đen trắng', tuoi: 5, created: subDays(now, 40).toISOString() },
+    { id: 'pet_6', ten: 'Bông', loai_thu: 'Mèo', giong: 'Ba Tư', khach_hang_id: 'cust_4', can_nang: 4.8, gioi_tinh: 'Cái', mau_long: 'Trắng', tuoi: 3, created: subDays(now, 40).toISOString() },
 ];
 
 export const mockRecords: MedicalRecord[] = [

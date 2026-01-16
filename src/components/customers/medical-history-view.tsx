@@ -78,7 +78,12 @@ export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => vo
                 <div className="flex items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-bold">{pet.ten}</h1>
-                        <p className="text-muted-foreground">{pet.loai_thu} - {pet.giong}</p>
+                         <p className="text-muted-foreground">
+                            {pet.loai_thu} - {pet.giong}
+                            {pet.mau_long && `, ${pet.mau_long}`}
+                            {pet.tuoi !== undefined && `, ${pet.tuoi} tuổi`}
+                            {pet.gioi_tinh && `, ${pet.gioi_tinh}`}
+                        </p>
                     </div>
                 </div>
             </div>

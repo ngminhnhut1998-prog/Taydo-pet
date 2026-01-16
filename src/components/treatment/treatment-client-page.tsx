@@ -18,22 +18,23 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const initialData = {
     newCustomerData: { ten: '', so_dien_thoai: '', so_dien_thoai_2: '', dia_chi: '' },
-    newPetData: { ten: '', loai_thu: 'Chó', giong: '' },
+    newPetData: { ten: '', loai_thu: 'Chó', giong: '', mau_long: '', tuoi: undefined as number | undefined, gioi_tinh: undefined as 'Đực' | 'Cái' | undefined },
     recordData: {
-        can_nang_kham: undefined,
+        can_nang_kham: undefined as number | undefined,
         trieu_chung: '',
         chan_doan: '',
         don_thuoc: '',
         ghi_chu: '',
         ngay_kham: new Date(),
         ban_kem: '',
-        chi_phi_chan_doan: undefined,
-        chi_phi_don_thuoc: undefined,
-        chi_phi_ban_kem: undefined,
-        chi_phi: undefined,
+        chi_phi_chan_doan: undefined as number | undefined,
+        chi_phi_don_thuoc: undefined as number | undefined,
+        chi_phi_ban_kem: undefined as number | undefined,
+        chi_phi: undefined as number | undefined,
         nhac_hen: [] as { ngay: string; noi_dung: string }[],
     },
 };
@@ -355,6 +356,26 @@ export default function TreatmentClientPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="new-pet-breed">Giống</Label>
                                         <Input id="new-pet-breed" placeholder="Cỏ" value={newPetData.giong} onChange={e => setNewPetData(p => ({...p, giong: e.target.value}))} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new-pet-color">Màu lông</Label>
+                                        <Input id="new-pet-color" placeholder="Vàng" value={newPetData.mau_long} onChange={e => setNewPetData(p => ({...p, mau_long: e.target.value}))} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new-pet-age">Tuổi (năm)</Label>
+                                        <Input id="new-pet-age" type="number" placeholder="2" value={newPetData.tuoi || ''} onChange={e => setNewPetData(p => ({...p, tuoi: e.target.value ? Number(e.target.value) : undefined}))} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Giới tính</Label>
+                                        <Select onValueChange={(value: 'Đực' | 'Cái') => setNewPetData(p => ({ ...p, gioi_tinh: value }))} value={newPetData.gioi_tinh}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Chọn giới tính" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Đực">Đực</SelectItem>
+                                                <SelectItem value="Cái">Cái</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
                                  {customerStatus === 'found' && <Button variant="link" className="p-0 h-auto" onClick={() => setPetStatus('selecting')}>Quay lại chọn thú cưng</Button>}

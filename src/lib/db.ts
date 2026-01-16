@@ -17,6 +17,8 @@ export interface Pet {
   ten: string;
   loai_thu: string;
   giong: string;
+  mau_long?: string;
+  tuoi?: number;
   can_nang?: number;
   gioi_tinh?: 'Đực' | 'Cái';
   khach_hang_id: string;
@@ -65,6 +67,23 @@ class VetClinicDB extends Dexie {
 
   constructor() {
     super('VetClinicDB');
+    this.version(9).stores({
+      customers: 'id, ten, so_dien_thoai, so_dien_thoai_2',
+      pets: 'id, ten, khach_hang_id',
+      records: 'id, thu_id, ngay_kham, *nhac_hen.ngay',
+      syncQueue: '++id, timestamp',
+    }).upgrade(tx => {
+        console.log("Upgrading database to version 9");
+        return tx.table('pets').toCollection().modify(pet => {
+            if (pet.mau_long === undefined) {
+                pet.mau_long = '';
+            }
+             if (pet.tuoi === undefined) {
+                pet.tuoi = undefined;
+            }
+        });
+    });
+
     this.version(8).stores({
       customers: 'id, ten, so_dien_thoai, so_dien_thoai_2',
       pets: 'id, ten, khach_hang_id',

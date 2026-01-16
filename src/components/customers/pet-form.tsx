@@ -18,6 +18,8 @@ const formSchema = z.object({
   ten: z.string().min(1, { message: "Tên không được để trống." }),
   loai_thu: z.string().min(2, { message: "Loài thú không được để trống." }),
   giong: z.string().min(2, { message: "Giống không được để trống." }),
+  mau_long: z.string().optional(),
+  tuoi: z.coerce.number().int().min(0, { message: "Tuổi phải là số không âm." }).optional(),
   can_nang: z.coerce.number().positive({ message: "Cân nặng phải là số dương."}).optional(),
   gioi_tinh: z.enum(['Đực', 'Cái']).optional(),
 });
@@ -38,14 +40,24 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
       ten: "",
       loai_thu: "",
       giong: "",
+      mau_long: "",
+      tuoi: undefined,
+      can_nang: undefined,
+      gioi_tinh: undefined,
     },
   });
 
   useEffect(() => {
-    if (existingPet) {
-      form.reset(existingPet);
-    } else {
-      form.reset({ ten: "", loai_thu: "", giong: "", can_nang: undefined, gioi_tinh: undefined });
+    if (isOpen) {
+      if (existingPet) {
+        form.reset({
+          ...existingPet,
+          tuoi: existingPet.tuoi ?? undefined,
+          mau_long: existingPet.mau_long ?? "",
+        });
+      } else {
+        form.reset({ ten: "", loai_thu: "", giong: "", mau_long: "", tuoi: undefined, can_nang: undefined, gioi_tinh: undefined });
+      }
     }
   }, [existingPet, form, isOpen]);
 
@@ -120,6 +132,34 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
              <div className="grid grid-cols-2 gap-4">
                 <FormField
                     control={form.control}
+                    name="mau_long"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Màu lông</FormLabel>
+                        <FormControl>
+                        <Input placeholder="Vàng" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="tuoi"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Tuổi (năm)</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="2" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
                     name="can_nang"
                     render={({ field }) => (
                     <FormItem>
@@ -137,7 +177,7 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Giới tính</FormLabel>
-                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                             <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Chọn giới tính" />

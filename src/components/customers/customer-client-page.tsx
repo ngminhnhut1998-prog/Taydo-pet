@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Edit, PawPrint, Users, Search, ArrowLeft, Bone, Heart, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, PawPrint, Users, Search, ArrowLeft, Bone, Heart, Trash2, Palette, Cake } from 'lucide-react';
 import { CustomerForm } from './customer-form';
 import { PetForm } from './pet-form';
 import { useSettings } from '@/contexts/settings-context';
@@ -120,14 +120,22 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
                                     </div>
                                 )}
                             </CardHeader>
-                            <CardContent className="grid grid-cols-2 gap-2 text-sm cursor-pointer" onClick={() => onSelectPet(pet)}>
+                            <CardContent className="grid grid-cols-2 gap-4 text-sm cursor-pointer" onClick={() => onSelectPet(pet)}>
                                 <div className="flex items-center gap-2">
-                                    <Bone className="h-4 w-4 text-muted-foreground" />
-                                    <span>{pet.can_nang ?? 'N/A'} kg</span>
-                                </div>
-                                 <div className="flex items-center gap-2">
                                     <Heart className="h-4 w-4 text-muted-foreground" />
                                     <span>{pet.gioi_tinh ?? 'N/A'}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Palette className="h-4 w-4 text-muted-foreground" />
+                                    <span>{pet.mau_long || 'N/A'}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Cake className="h-4 w-4 text-muted-foreground" />
+                                    <span>{pet.tuoi ? `${pet.tuoi} tuổi` : 'N/A'}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Bone className="h-4 w-4 text-muted-foreground" />
+                                    <span>{pet.can_nang ? `${pet.can_nang} kg` : 'N/A'}</span>
                                 </div>
                             </CardContent>
                              <div className="p-6 pt-0 mt-auto">
