@@ -41,7 +41,7 @@ export default function LoginPage() {
       // preventing a redirect loop back to the login page.
       setTimeout(() => {
         window.location.href = '/dashboard';
-      }, 500);
+      }, 1000);
     } catch (err: any) {
       console.error("Lỗi đăng nhập chi tiết:", err);
       if (err?.data?.message?.includes("Failed to authenticate")) {
