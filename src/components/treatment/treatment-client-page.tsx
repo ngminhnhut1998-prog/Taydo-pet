@@ -10,7 +10,7 @@ import { useSettings } from '@/contexts/settings-context';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, UserPlus, PawPrint, Save, RotateCcw, AlertCircle, CalendarIcon } from 'lucide-react';
+import { Loader2, UserPlus, PawPrint, Save, RotateCcw, AlertCircle, CalendarIcon, Search, ChevronsRight } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '../ui/textarea';
@@ -20,7 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { cn } from '@/lib/utils';
 
 const initialData = {
-    newCustomerData: { ten: '', dia_chi: '' },
+    newCustomerData: { ten: '', so_dien_thoai: '', dia_chi: '' },
     newPetData: { ten: '', loai_thu: 'Chó', giong: '' },
     recordData: {
         can_nang_kham: undefined,
@@ -38,55 +38,70 @@ export default function TreatmentClientPage() {
     const { toast } = useToast();
 
     // Step 1: Customer state
-    const [phone, setPhone] = useState('');
-    const [debouncedPhone, setDebouncedPhone] = useState('');
-    const [customerStatus, setCustomerStatus] = useState<'idle' | 'loading' | 'found' | 'new'>('idle');
-    const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+    const [customerStatus, setCustomerStatus] = useState<'idle' | 'searching' | 'found' | 'new' | 'no-results'>('idle');
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [newCustomerData, setNewCustomerData] = useState(initialData.newCustomerData);
 
     // Step 2: Pet state
     const [petStatus, setPetStatus] = useState<'idle' | 'selecting' | 'new'>('idle');
     const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
     const [newPetData, setNewPetData] = useState(initialData.newPetData);
-    const customerForPetList = customerStatus === 'found' ? foundCustomer : null;
-    const petsOfCustomer = useLiveQuery(() => customerForPetList ? db.pets.where('khach_hang_id').equals(customerForPetList.id).toArray() : [], [customerForPetList]);
+    const petsOfCustomer = useLiveQuery(() => selectedCustomer ? db.pets.where('khach_hang_id').equals(selectedCustomer.id).toArray() : [], [selectedCustomer]);
 
     // Step 3: Record state
     const [recordData, setRecordData] = useState(initialData.recordData);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Debounce phone input
+    // Debounce search input
     useEffect(() => {
-        setCustomerStatus('loading');
-        const handler = setTimeout(() => setDebouncedPhone(phone), 500);
-        return () => clearTimeout(handler);
-    }, [phone]);
-
-    const customerQuery = useLiveQuery(() => debouncedPhone.length >= 9 ? db.customers.where('so_dien_thoai').equals(debouncedPhone).first() : undefined, [debouncedPhone]);
-
-    useEffect(() => {
-        if (debouncedPhone.length < 9) {
-            setCustomerStatus('idle');
-            setFoundCustomer(null);
-            return;
+        if (customerStatus !== 'found' && customerStatus !== 'new') {
+            setCustomerStatus(searchTerm ? 'searching' : 'idle');
+            const handler = setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
+            return () => clearTimeout(handler);
         }
-        if (customerQuery) {
-            setFoundCustomer(customerQuery);
-            setCustomerStatus('found');
-            setPetStatus('selecting');
-        } else {
-            setFoundCustomer(null);
-            setCustomerStatus('new');
-            setPetStatus('new');
-        }
-    }, [customerQuery, debouncedPhone]);
+    }, [searchTerm, customerStatus]);
     
+    const searchResults = useLiveQuery(async () => {
+        if (!debouncedSearchTerm) return [];
+        const lowercasedTerm = debouncedSearchTerm.toLowerCase();
+        return db.customers
+            .filter(customer => 
+                customer.ten.toLowerCase().includes(lowercasedTerm) || 
+                customer.so_dien_thoai.includes(debouncedSearchTerm)
+            )
+            .limit(10)
+            .toArray();
+    }, [debouncedSearchTerm]);
+
+    useEffect(() => {
+        if (customerStatus === 'searching') {
+            if (searchResults === undefined) return; // Still loading
+            if (searchResults.length === 0) {
+                setCustomerStatus('no-results');
+            }
+        }
+    }, [searchResults, customerStatus]);
+    
+    const handleSelectCustomer = (customer: Customer) => {
+        setSelectedCustomer(customer);
+        setCustomerStatus('found');
+        setPetStatus('selecting');
+    }
+
+    const handleStartNewCustomer = () => {
+        setCustomerStatus('new');
+        setPetStatus('new');
+        setNewCustomerData({ ...initialData.newCustomerData, so_dien_thoai: searchTerm })
+    }
+
     const resetForm = useCallback(() => {
-        setPhone('');
-        setDebouncedPhone('');
+        setSearchTerm('');
+        setDebouncedSearchTerm('');
         setCustomerStatus('idle');
-        setFoundCustomer(null);
+        setSelectedCustomer(null);
         setNewCustomerData(initialData.newCustomerData);
         setPetStatus('idle');
         setSelectedPet(null);
@@ -103,13 +118,13 @@ export default function TreatmentClientPage() {
             let customerId: string;
             // 1. Create or get customer
             if (customerStatus === 'new') {
-                if (!newCustomerData.ten || !newCustomerData.dia_chi) {
-                    throw new Error("Vui lòng nhập đủ tên và địa chỉ cho khách hàng mới.");
+                if (!newCustomerData.ten || !newCustomerData.dia_chi || !newCustomerData.so_dien_thoai) {
+                    throw new Error("Vui lòng nhập đủ SĐT, tên và địa chỉ cho khách hàng mới.");
                 }
-                const newCustomer = await customerApi.create({ ...newCustomerData, so_dien_thoai: phone });
+                const newCustomer = await customerApi.create({ ...newCustomerData });
                 customerId = newCustomer.id;
-            } else if (foundCustomer) {
-                customerId = foundCustomer.id;
+            } else if (selectedCustomer) {
+                customerId = selectedCustomer.id;
             } else {
                 throw new Error("Không xác định được khách hàng.");
             }
@@ -151,7 +166,6 @@ export default function TreatmentClientPage() {
     
     const showStep2 = customerStatus === 'found' || customerStatus === 'new';
     const showStep3 = showStep2 && (petStatus === 'new' || (petStatus === 'selecting' && selectedPet));
-
     const isSaveDisabled = isReadOnly || isSubmitting || !showStep3;
 
     return (
@@ -159,27 +173,84 @@ export default function TreatmentClientPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Bước 1: Thông tin Khách hàng</CardTitle>
-                    <CardDescription>Nhập số điện thoại để tìm khách hàng cũ hoặc tạo mới.</CardDescription>
+                    <CardDescription>Nhập tên hoặc SĐT để tìm khách hàng cũ hoặc tạo mới.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="flex gap-4 items-start">
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="phone">Số điện thoại</Label>
-                            <Input id="phone" placeholder="Nhập SĐT để bắt đầu..." value={phone} onChange={(e) => setPhone(e.target.value)} autoFocus />
-                        </div>
-                         {customerStatus === 'loading' && phone.length >= 9 && <Loader2 className="mt-9 h-5 w-5 animate-spin text-muted-foreground" />}
-                    </div>
+                    {customerStatus !== 'found' && customerStatus !== 'new' ? (
+                        <div className="space-y-4">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    id="customer-search" 
+                                    placeholder="Tìm theo tên hoặc SĐT..." 
+                                    value={searchTerm} 
+                                    onChange={(e) => setSearchTerm(e.target.value)} 
+                                    autoFocus 
+                                    className="pl-10"
+                                />
+                            </div>
 
-                    {customerStatus === 'found' && foundCustomer && (
+                            {customerStatus === 'searching' && searchResults === undefined && (
+                                <div className="flex items-center justify-center p-4">
+                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                </div>
+                            )}
+
+                            {customerStatus === 'searching' && searchResults && searchResults.length > 0 && (
+                                <div className="border rounded-md">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Tên khách hàng</TableHead>
+                                                <TableHead>Số điện thoại</TableHead>
+                                                <TableHead>Địa chỉ</TableHead>
+                                                <TableHead className="w-[50px]"></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {searchResults.map(customer => (
+                                                <TableRow key={customer.id} className="cursor-pointer hover:bg-accent" onClick={() => handleSelectCustomer(customer)}>
+                                                    <TableCell className="font-medium">{customer.ten}</TableCell>
+                                                    <TableCell>{customer.so_dien_thoai}</TableCell>
+                                                    <TableCell className="text-muted-foreground">{customer.dia_chi}</TableCell>
+                                                    <TableCell><ChevronsRight className="h-5 w-5 text-primary"/></TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+
+                            {customerStatus === 'no-results' && (
+                                <div className="text-center p-6 border rounded-lg bg-secondary/50">
+                                    <p className="text-muted-foreground">Không tìm thấy khách hàng khớp với `{searchTerm}`.</p>
+                                    <Button variant="link" onClick={handleStartNewCustomer} className="mt-2">
+                                        <UserPlus className="mr-2" />
+                                        Thêm khách hàng mới với thông tin này?
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    ) : null}
+
+                    {customerStatus === 'found' && selectedCustomer && (
                         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                            <p className="font-semibold text-green-800">Khách hàng cũ:</p>
-                            <p><strong>{foundCustomer.ten}</strong> - {foundCustomer.dia_chi}</p>
+                            <p className="font-semibold text-green-800">Khách hàng đã chọn:</p>
+                            <p><strong>{selectedCustomer.ten}</strong> - {selectedCustomer.so_dien_thoai} - {selectedCustomer.dia_chi}</p>
+                            <Button variant="link" size="sm" className="p-0 h-auto mt-1" onClick={() => { setSelectedCustomer(null); setCustomerStatus('idle')}}>
+                                Chọn khách hàng khác
+                            </Button>
                         </div>
                     )}
+
                     {customerStatus === 'new' && (
                         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
-                             <p className="font-semibold text-blue-800 flex items-center gap-2"><UserPlus/> Khách hàng mới:</p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <p className="font-semibold text-blue-800 flex items-center gap-2"><UserPlus/> Tạo khách hàng mới:</p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-customer-phone">Số điện thoại</Label>
+                                    <Input id="new-customer-phone" placeholder="Nhập SĐT" value={newCustomerData.so_dien_thoai} onChange={e => setNewCustomerData(p => ({...p, so_dien_thoai: e.target.value}))} />
+                                </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="new-customer-name">Tên khách hàng</Label>
                                     <Input id="new-customer-name" placeholder="Nguyễn Văn A" value={newCustomerData.ten} onChange={e => setNewCustomerData(p => ({...p, ten: e.target.value}))} />
@@ -189,13 +260,16 @@ export default function TreatmentClientPage() {
                                     <Input id="new-customer-address" placeholder="123 Đường ABC, Quận 1, TP. HCM" value={newCustomerData.dia_chi} onChange={e => setNewCustomerData(p => ({...p, dia_chi: e.target.value}))} />
                                 </div>
                             </div>
+                             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => { setCustomerStatus('idle')}}>
+                                Hủy và tìm kiếm lại
+                            </Button>
                         </div>
                     )}
                 </CardContent>
             </Card>
 
             {showStep2 && (
-                <Card>
+                 <Card>
                     <CardHeader>
                         <CardTitle>Bước 2: Thông tin Thú cưng</CardTitle>
                         <CardDescription>Chọn thú cưng có sẵn hoặc tạo mới.</CardDescription>
@@ -218,7 +292,7 @@ export default function TreatmentClientPage() {
                                             petsOfCustomer.map(pet => (
                                                 <TableRow key={pet.id} className="cursor-pointer" onClick={() => setSelectedPet(pet)}>
                                                     <TableCell><RadioGroupItem value={pet.id} id={`pet-${pet.id}`} /></TableCell>
-                                                    <TableCell><Label htmlFor={`pet-${pet.id}`} className="font-medium">{pet.ten}</Label></TableCell>
+                                                    <TableCell><Label htmlFor={`pet-${pet.id}`} className="font-medium cursor-pointer">{pet.ten}</Label></TableCell>
                                                     <TableCell className="text-muted-foreground">{pet.loai_thu}</TableCell>
                                                     <TableCell className="text-muted-foreground">{pet.giong}</TableCell>
                                                 </TableRow>
@@ -229,8 +303,8 @@ export default function TreatmentClientPage() {
                                         </TableBody>
                                     </Table>
                                  </div>
-                                 <Button variant="link" className="p-0 h-auto" onClick={() => setPetStatus('new')}>
-                                     <UserPlus className="mr-2" />
+                                 <Button variant="link" className="p-0 h-auto text-primary" onClick={() => setPetStatus('new')}>
+                                     <PawPrint className="mr-2 h-4 w-4" />
                                      Không tìm thấy? Thêm thú cưng mới
                                  </Button>
                             </RadioGroup>
