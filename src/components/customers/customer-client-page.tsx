@@ -289,8 +289,8 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                                                 <div className="font-medium">{customer.ten}</div>
                                             </TableCell>
                                             <TableCell>
-                                                {customer.so_dien_thoai}
-                                                {customer.so_dien_thoai_2 && <div className="text-xs text-muted-foreground">{customer.so_dien_thoai_2}</div>}
+                                                <div>{customer.so_dien_thoai}</div>
+                                                {customer.so_dien_thoai_2 && <div>{customer.so_dien_thoai_2}</div>}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground max-w-xs truncate">{customer.dia_chi}</TableCell>
                                             <TableCell>
