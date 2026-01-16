@@ -23,9 +23,10 @@ interface CustomerFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   existingCustomer?: Customer;
+  onSaveSuccess?: (customer: Customer) => void;
 }
 
-export function CustomerForm({ isOpen, setIsOpen, existingCustomer }: CustomerFormProps) {
+export function CustomerForm({ isOpen, setIsOpen, existingCustomer, onSaveSuccess }: CustomerFormProps) {
   const { isReadOnly } = useSettings();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
@@ -49,14 +50,16 @@ export function CustomerForm({ isOpen, setIsOpen, existingCustomer }: CustomerFo
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      let savedCustomer: Customer;
       if (existingCustomer) {
-        await customerApi.update(existingCustomer.id, values);
+        savedCustomer = await customerApi.update(existingCustomer.id, values);
         toast({ title: "Thành công", description: "Đã cập nhật thông tin khách hàng." });
       } else {
-        await customerApi.create(values);
+        savedCustomer = await customerApi.create(values);
         toast({ title: "Thành công", description: "Đã thêm khách hàng mới." });
       }
       setIsOpen(false);
+      onSaveSuccess?.(savedCustomer);
     } catch (error) {
       console.error(error);
       toast({ title: "Lỗi", description: "Không thể lưu thông tin. Vui lòng thử lại.", variant: 'destructive' });

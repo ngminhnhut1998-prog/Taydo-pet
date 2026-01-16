@@ -43,6 +43,7 @@ export default function TreatmentClientPage() {
     const handleSelectCustomer = (customer: Customer) => {
         setSelectedCustomer(customer);
         setSelectedPet(null);
+        setSearchTerm(''); // Clear search term after selection
     }
     
     const handleSelectPet = (pet: Pet) => {
@@ -155,7 +156,12 @@ export default function TreatmentClientPage() {
     // View 1: Customer Search
     return (
         <div className="space-y-6">
-            <CustomerForm isOpen={isCustomerFormOpen} setIsOpen={setIsCustomerFormOpen} existingCustomer={editingCustomer} />
+            <CustomerForm 
+                isOpen={isCustomerFormOpen} 
+                setIsOpen={setIsCustomerFormOpen} 
+                existingCustomer={editingCustomer}
+                onSaveSuccess={handleSelectCustomer}
+            />
             <div className="flex flex-col gap-4 md:flex-row justify-between items-center">
                 <div className="relative w-full md:max-w-lg">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
