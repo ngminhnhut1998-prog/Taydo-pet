@@ -8,7 +8,7 @@ import type { Admin, Record as PocketBaseRecord } from 'pocketbase';
 interface AuthContextType {
   user: PocketBaseRecord | Admin | null;
   isLoggedIn: boolean;
-  login: (email: string, pass: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -28,12 +28,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const login = async (email: string, pass: string) => {
+  const login = async (email: string, password: string) => {
     if (email.toLowerCase() !== 'batruonghugo@gmail.com') {
         throw new Error("Email không hợp lệ. Chỉ email được cấp phép mới có thể đăng nhập.");
     }
-    // For this specific app, we are logging in as an admin.
-    await pb.admins.authWithPassword(email, pass);
+    await pb.collection('users').authWithPassword(email, password);
     router.refresh(); // to re-run middleware and get redirected
     router.push('/dashboard');
   };
