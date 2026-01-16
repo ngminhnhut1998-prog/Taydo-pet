@@ -162,28 +162,28 @@ export default function TreatmentClientPage() {
                 existingCustomer={editingCustomer}
                 onSaveSuccess={handleSelectCustomer}
             />
-            <div className="flex flex-col gap-4 md:flex-row justify-between items-center">
-                <div className="relative w-full md:max-w-lg">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                        placeholder="Tìm khách hàng theo tên hoặc số điện thoại..." 
-                        className="pl-10 h-12 text-base"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        autoFocus
-                    />
-                </div>
-                {!isReadOnly && (
-                    <Button onClick={handleOpenNewCustomerForm} className="w-full md:w-auto">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Thêm khách hàng mới
-                    </Button>
-                )}
+            <div className="relative w-full md:max-w-lg">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="Tìm khách hàng theo tên hoặc số điện thoại..." 
+                    className="pl-10 h-12 text-base"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    autoFocus
+                />
             </div>
             
             <Card>
-                 <CardHeader>
-                    <CardTitle>Kết quả tìm kiếm</CardTitle>
-                    <CardDescription>Chọn một khách hàng để tiếp tục.</CardDescription>
+                 <CardHeader className="flex-row items-center justify-between space-y-0">
+                    <div>
+                        <CardTitle>Kết quả tìm kiếm</CardTitle>
+                        <CardDescription>Chọn một khách hàng để tiếp tục.</CardDescription>
+                    </div>
+                    {!isReadOnly && (
+                        <Button onClick={handleOpenNewCustomerForm}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Thêm khách hàng mới
+                        </Button>
+                    )}
                 </CardHeader>
                 <CardContent className="p-0">
                     {searchTerm && customers && customers.length > 0 ? (
@@ -211,7 +211,7 @@ export default function TreatmentClientPage() {
                                 {searchTerm ? "Không tìm thấy khách hàng" : "Bắt đầu nhập liệu"}
                             </h3>
                             <p className="max-w-md">
-                               {searchTerm ? "Thử lại với từ khóa khác hoặc bấm 'Thêm khách hàng mới'." : "Nhập tên hoặc SĐT của khách hàng vào ô tìm kiếm để tìm và thêm bệnh án."}
+                               {searchTerm ? "Thử lại với từ khóa khác hoặc bấm 'Thêm khách hàng mới'." : "Nhập tên hoặc SĐT của khách hàng để tìm, hoặc bấm nút 'Thêm khách hàng mới' để bắt đầu."}
                             </p>
                         </div>
                     )}
