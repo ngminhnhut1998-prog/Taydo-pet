@@ -13,18 +13,18 @@ import type { Pet } from '@/lib/db';
 import { useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useSettings } from '@/contexts/settings-context';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Calendar } from '../ui/calendar';
-import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, isValid, parse } from 'date-fns';
 
 const formSchema = z.object({
   ten: z.string().min(1, { message: "Tên không được để trống." }),
   loai_thu: z.string().min(2, { message: "Loài thú không được để trống." }),
   giong: z.string().min(2, { message: "Giống không được để trống." }),
   mau_long: z.string().optional(),
-  ngay_sinh: z.date().optional(),
+  ngay_sinh: z.string().optional().refine((val) => {
+    if (!val || val.trim() === '') return true;
+    const parsedDate = parse(val, 'dd/MM/yyyy', new Date());
+    return isValid(parsedDate) && val.length === 10;
+  }, { message: 'Ngày sinh không hợp lệ. Dùng định dạng dd/MM/yyyy.'}),
   can_nang: z.coerce.number().positive({ message: "Cân nặng phải là số dương."}).optional(),
   gioi_tinh: z.enum(['Đực', 'Cái', 'Đực thiến', 'Cái thiến']).optional(),
 });
@@ -46,7 +46,7 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
       loai_thu: "",
       giong: "",
       mau_long: "",
-      ngay_sinh: undefined,
+      ngay_sinh: "",
       can_nang: undefined,
       gioi_tinh: undefined,
     },
@@ -57,11 +57,11 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
       if (existingPet) {
         form.reset({
           ...existingPet,
-          ngay_sinh: existingPet.ngay_sinh ? new Date(existingPet.ngay_sinh) : undefined,
+          ngay_sinh: existingPet.ngay_sinh ? format(new Date(existingPet.ngay_sinh), "dd/MM/yyyy") : "",
           mau_long: existingPet.mau_long ?? "",
         });
       } else {
-        form.reset({ ten: "", loai_thu: "", giong: "", mau_long: "", ngay_sinh: undefined, can_nang: undefined, gioi_tinh: undefined });
+        form.reset({ ten: "", loai_thu: "", giong: "", mau_long: "", ngay_sinh: "", can_nang: undefined, gioi_tinh: undefined });
       }
     }
   }, [existingPet, form, isOpen]);
@@ -69,7 +69,7 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const dataToSave = {
         ...values,
-        ngay_sinh: values.ngay_sinh ? values.ngay_sinh.toISOString() : undefined,
+        ngay_sinh: values.ngay_sinh ? parse(values.ngay_sinh, 'dd/MM/yyyy', new Date()).toISOString() : undefined,
     };
     try {
       if (existingPet) {
@@ -156,40 +156,12 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
                     control={form.control}
                     name="ngay_sinh"
                     render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                        <FormLabel>Ngày sinh</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "dd/MM/yyyy")
-                                ) : (
-                                    <span>Chọn ngày</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
+                        <FormItem>
+                            <FormLabel>Ngày sinh</FormLabel>
+                             <FormControl>
+                                <Input placeholder="dd/MM/yyyy" {...field} />
                             </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                date > new Date() || date < new Date("1900-01-01")
-                                }
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
+                            <FormMessage />
                         </FormItem>
                     )}
                     />

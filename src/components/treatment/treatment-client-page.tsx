@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { format, startOfDay } from 'date-fns';
+import { format, startOfDay, parse, isValid } from 'date-fns';
 import { db, type Customer, type Pet, type MedicalRecord } from '@/lib/db';
 import { customerApi, petApi, recordApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 const initialData = {
     newCustomerData: { ten: '', so_dien_thoai: '', so_dien_thoai_2: '', dia_chi: '' },
-    newPetData: { ten: '', loai_thu: 'Chó', giong: '', mau_long: '', ngay_sinh: undefined as Date | undefined, gioi_tinh: undefined as 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến' | undefined, can_nang: undefined as number | undefined },
+    newPetData: { ten: '', loai_thu: 'Chó', giong: '', mau_long: '', ngay_sinh: '', gioi_tinh: undefined as 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến' | undefined, can_nang: undefined as number | undefined },
     recordData: {
         can_nang_kham: undefined as number | undefined,
         trieu_chung: '',
@@ -142,11 +142,21 @@ export default function TreatmentClientPage() {
                 if (!newPetData.ten || !newPetData.giong) {
                     throw new Error("Vui lòng nhập đủ tên và giống cho thú cưng mới.");
                 }
-                const petDataToSave = {
+                
+                const petDataForApi = {
                     ...newPetData,
-                    ngay_sinh: newPetData.ngay_sinh ? newPetData.ngay_sinh.toISOString() : undefined,
+                    ngay_sinh: undefined as string | undefined
+                };
+                
+                if (newPetData.ngay_sinh) {
+                    const parsedDate = parse(newPetData.ngay_sinh, 'dd/MM/yyyy', new Date());
+                    if (!isValid(parsedDate) || newPetData.ngay_sinh.length !== 10) {
+                        throw new Error("Ngày sinh của thú cưng mới không hợp lệ. Vui lòng dùng định dạng dd/MM/yyyy.");
+                    }
+                    petDataForApi.ngay_sinh = parsedDate.toISOString();
                 }
-                const newPet = await petApi.create({ ...petDataToSave, khach_hang_id: customerId });
+
+                const newPet = await petApi.create({ ...petDataForApi, khach_hang_id: customerId });
                 petId = newPet.id;
             } else if (selectedPet) {
                 petId = selectedPet.id;
@@ -366,24 +376,13 @@ export default function TreatmentClientPage() {
                                         <Input id="new-pet-color" placeholder="Vàng" value={newPetData.mau_long} onChange={e => setNewPetData(p => ({...p, mau_long: e.target.value}))} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="new-pet-age">Ngày sinh</Label>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !newPetData.ngay_sinh && "text-muted-foreground")}>
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {newPetData.ngay_sinh ? format(newPetData.ngay_sinh, "dd/MM/yyyy") : <span>Chọn ngày</span>}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0">
-                                                <Calendar 
-                                                    mode="single" 
-                                                    selected={newPetData.ngay_sinh} 
-                                                    onSelect={date => date && setNewPetData(p => ({...p, ngay_sinh: date}))} 
-                                                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                                                    initialFocus 
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
+                                        <Label htmlFor="new-pet-birthdate">Ngày sinh</Label>
+                                        <Input
+                                            id="new-pet-birthdate"
+                                            placeholder="dd/MM/yyyy"
+                                            value={newPetData.ngay_sinh}
+                                            onChange={e => setNewPetData(p => ({...p, ngay_sinh: e.target.value}))}
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Giới tính</Label>
