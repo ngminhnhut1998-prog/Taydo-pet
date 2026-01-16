@@ -10,7 +10,7 @@ import { useSettings } from '@/contexts/settings-context';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, UserPlus, PawPrint, Save, RotateCcw, AlertCircle, CalendarIcon, Search, ChevronsRight } from 'lucide-react';
+import { Loader2, UserPlus, PawPrint, Save, RotateCcw, AlertCircle, CalendarIcon, Search, ChevronsRight, Plus, Trash2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '../ui/textarea';
@@ -34,6 +34,7 @@ const initialData = {
         chi_phi_don_thuoc: undefined,
         chi_phi_ban_kem: undefined,
         chi_phi: undefined,
+        nhac_hen: [] as { ngay: string; noi_dung: string }[],
     },
 };
 
@@ -155,6 +156,12 @@ export default function TreatmentClientPage() {
                 ...recordData,
                 thu_id: petId,
                 ngay_kham: recordData.ngay_kham.toISOString(),
+                nhac_hen: (recordData.nhac_hen || [])
+                    .filter(h => h.ngay && h.noi_dung)
+                    .map(h => ({
+                        ...h,
+                        ngay: startOfDay(new Date(h.ngay)).toISOString()
+                })),
             });
 
             toast({ title: 'Thành công!', description: 'Đã lưu thông tin tiếp nhận bệnh nhân.' });
@@ -414,7 +421,62 @@ export default function TreatmentClientPage() {
 
                         <div className="space-y-2">
                             <Label htmlFor="notes">Ghi chú / Dặn dò</Label>
-                            <Textarea id="notes" placeholder="Tái khám sau 1 tuần..." value={recordData.ghi_chu} onChange={e => setRecordData(p => ({...p, ghi_chu: e.target.value}))} />
+                            <Textarea id="notes" placeholder="Tái khám sau 1 tuần..." value={recordData.ghi_chu || ''} onChange={e => setRecordData(p => ({...p, ghi_chu: e.target.value}))} />
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label>Nhắc hẹn</Label>
+                            {(recordData.nhac_hen || []).map((hen, index) => (
+                                <div key={index} className="flex items-end gap-2">
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor={`hen-ngay-${index}`} className="sr-only">Ngày hẹn</Label>
+                                        <Input
+                                            id={`hen-ngay-${index}`}
+                                            type="date"
+                                            value={hen.ngay}
+                                            onChange={e => {
+                                                const newHen = [...(recordData.nhac_hen || [])];
+                                                newHen[index] = { ...newHen[index], ngay: e.target.value };
+                                                setRecordData(p => ({ ...p, nhac_hen: newHen }));
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor={`hen-noi-dung-${index}`} className="sr-only">Nội dung hẹn</Label>
+                                        <Input
+                                            id={`hen-noi-dung-${index}`}
+                                            placeholder="Nội dung hẹn (tái khám, tiêm, ...)"
+                                            value={hen.noi_dung}
+                                            onChange={e => {
+                                                const newHen = [...(recordData.nhac_hen || [])];
+                                                newHen[index] = { ...newHen[index], noi_dung: e.target.value };
+                                                setRecordData(p => ({ ...p, nhac_hen: newHen }));
+                                            }}
+                                        />
+                                    </div>
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => {
+                                        const newHen = (recordData.nhac_hen || []).filter((_, i) => i !== index);
+                                        setRecordData(p => ({ ...p, nhac_hen: newHen }));
+                                    }}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                            {(recordData.nhac_hen || []).length < 3 && !isReadOnly && (
+                                <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    if ((recordData.nhac_hen || []).length < 3) {
+                                        setRecordData(p => ({ ...p, nhac_hen: [...(p.nhac_hen || []), { ngay: "", noi_dung: "" }] }));
+                                    }
+                                }}
+                                >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Thêm nhắc hẹn
+                                </Button>
+                            )}
                         </div>
                         
                         <div className="space-y-2">
