@@ -74,7 +74,7 @@ function AppointmentDisplayTable({ appointments }: { appointments: FullAppointme
                 <TableCell className="text-muted-foreground">{appointment.noi_dung}</TableCell>
                 <TableCell>
                     {isPast ? (
-                        <Badge variant="outline" className="text-destructive border-destructive">Đã trễ</Badge>
+                        <Badge variant="destructive">Đã trễ</Badge>
                     ) : (
                         <Badge variant="outline">Sắp tới</Badge>
                     )}
