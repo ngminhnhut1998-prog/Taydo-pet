@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Edit, PawPrint, Users, Search, ArrowLeft, Bone, Heart } from 'lucide-react';
+import { PlusCircle, Edit, PawPrint, Users, Search, ArrowLeft, Bone, Heart, Trash2 } from 'lucide-react';
 import { CustomerForm } from './customer-form';
 import { PetForm } from './pet-form';
 import { useSettings } from '@/contexts/settings-context';
 import { MedicalHistoryView } from './medical-history-view';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface FullCustomerInfo extends Customer {
     pets: Pet[];
@@ -21,14 +23,33 @@ interface FullCustomerInfo extends Customer {
 // Level 2: Pet List
 function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomerInfo; onBack: () => void; onSelectPet: (pet: Pet) => void }) {
     const { isReadOnly } = useSettings();
+    const { toast } = useToast();
     const [isPetFormOpen, setIsPetFormOpen] = useState(false);
     const [selectedPet, setSelectedPet] = useState<Pet | undefined>(undefined);
+    const [petToDelete, setPetToDelete] = useState<Pet | undefined>(undefined);
     
     const openPetForm = (pet?: Pet) => {
         if (isReadOnly) return;
         setSelectedPet(pet);
         setIsPetFormOpen(true);
     };
+
+    const handleDeletePet = async () => {
+        if (!petToDelete) return;
+        try {
+            await db.transaction('rw', db.pets, db.records, async () => {
+                await db.records.where('thu_id').equals(petToDelete.id).delete();
+                await db.pets.delete(petToDelete.id);
+            });
+            toast({ title: "Thành công", description: `Đã xóa thú cưng ${petToDelete.ten}.` });
+        } catch (error) {
+            console.error("Failed to delete pet:", error);
+            toast({ title: "Lỗi", description: "Không thể xóa thú cưng. Vui lòng thử lại.", variant: 'destructive' });
+        } finally {
+            setPetToDelete(undefined);
+        }
+    };
+
 
     return (
         <div className="space-y-6">
@@ -38,6 +59,20 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
                 customerId={customer.id}
                 existingPet={selectedPet}
             />
+             <AlertDialog open={!!petToDelete} onOpenChange={(open) => !open && setPetToDelete(undefined)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                           Hành động này sẽ xóa vĩnh viễn thú cưng "{petToDelete?.ten}" cùng với tất cả bệnh án liên quan. Hành động này không thể hoàn tác.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeletePet} className='bg-destructive hover:bg-destructive/90'>Xóa</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             <div>
                 <Button variant="ghost" onClick={onBack} className="mb-4">
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -63,19 +98,24 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
             {customer.pets && customer.pets.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {customer.pets.map(pet => (
-                        <Card key={pet.id} className="cursor-pointer hover:border-primary transition-colors flex flex-col" >
-                            <CardHeader className="flex-row gap-4 items-center" onClick={() => onSelectPet(pet)}>
-                                <div>
+                        <Card key={pet.id} className="hover:border-primary transition-colors flex flex-col" >
+                            <CardHeader className="flex-row gap-4 items-start">
+                                <div className="flex-1 cursor-pointer" onClick={() => onSelectPet(pet)}>
                                     <CardTitle>{pet.ten}</CardTitle>
                                     <p className="text-sm text-muted-foreground">{pet.giong}</p>
                                 </div>
                                 {!isReadOnly && (
-                                    <Button variant="ghost" size="icon" className="ml-auto" onClick={(e) => { e.stopPropagation(); openPetForm(pet); }}>
-                                        <Edit className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex">
+                                        <Button variant="ghost" size="icon" onClick={() => openPetForm(pet)}>
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => setPetToDelete(pet)}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    </div>
                                 )}
                             </CardHeader>
-                            <CardContent className="grid grid-cols-2 gap-2 text-sm" onClick={() => onSelectPet(pet)}>
+                            <CardContent className="grid grid-cols-2 gap-2 text-sm cursor-pointer" onClick={() => onSelectPet(pet)}>
                                 <div className="flex items-center gap-2">
                                     <Bone className="h-4 w-4 text-muted-foreground" />
                                     <span>{pet.can_nang ?? 'N/A'} kg</span>
@@ -104,6 +144,7 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
 // Level 1: Customer List
 function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: FullCustomerInfo) => void }) {
     const { isReadOnly } = useSettings();
+    const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
     const allCustomers = useLiveQuery(() => db.customers.toArray(), []);
     const allPets = useLiveQuery(() => db.pets.toArray(), []);
@@ -134,12 +175,37 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
 
     const [isCustomerFormOpen, setIsCustomerFormOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
+    const [customerToDelete, setCustomerToDelete] = useState<FullCustomerInfo | undefined>(undefined);
 
     const openCustomerForm = (customer?: Customer) => {
         if (isReadOnly) return;
         setSelectedCustomer(customer);
         setIsCustomerFormOpen(true);
     }
+    
+    const handleDeleteCustomer = async () => {
+        if (!customerToDelete) return;
+        try {
+            const petsToDelete = await db.pets.where('khach_hang_id').equals(customerToDelete.id).toArray();
+            const petIds = petsToDelete.map(p => p.id);
+
+            await db.transaction('rw', db.customers, db.pets, db.records, async () => {
+                if (petIds.length > 0) {
+                    await db.records.where('thu_id').anyOf(petIds).delete();
+                }
+                await db.pets.where('khach_hang_id').equals(customerToDelete.id).delete();
+                await db.customers.delete(customerToDelete.id);
+            });
+
+            toast({ title: "Thành công", description: `Đã xóa khách hàng ${customerToDelete.ten} và toàn bộ dữ liệu liên quan.` });
+        } catch (error) {
+            console.error("Failed to delete customer:", error);
+            toast({ title: "Lỗi", description: "Không thể xóa khách hàng. Vui lòng thử lại.", variant: 'destructive' });
+        } finally {
+            setCustomerToDelete(undefined);
+        }
+    };
+
 
     return (
         <div className="space-y-6">
@@ -147,6 +213,20 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                 <h1 className="text-3xl font-bold">Quản lý Khách hàng</h1>
                 <p className="text-muted-foreground">Tìm kiếm, xem và quản lý thông tin khách hàng và thú cưng của họ.</p>
             </div>
+             <AlertDialog open={!!customerToDelete} onOpenChange={(open) => !open && setCustomerToDelete(undefined)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Hành động này sẽ xóa vĩnh viễn khách hàng "{customerToDelete?.ten}" cùng với tất cả thú cưng và bệnh án liên quan. Hành động này không thể hoàn tác.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteCustomer} className='bg-destructive hover:bg-destructive/90'>Xóa</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             <CustomerForm 
                 isOpen={isCustomerFormOpen} 
                 setIsOpen={setIsCustomerFormOpen}
@@ -196,6 +276,9 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openCustomerForm(customer); }}>
                                                     <Edit className="h-4 w-4" />
                                                 </Button>
+                                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setCustomerToDelete(customer); }}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
                                             </TableCell>
                                         )}
                                     </TableRow>
@@ -244,6 +327,11 @@ export default function CustomerClientPage() {
     }
 
     if (selectedCustomer) {
+        // When a pet is deleted, we need to refresh the customer object to reflect the change
+        const refreshedCustomer = {
+            ...selectedCustomer,
+            pets: selectedCustomer.pets.filter(p => db.pets.get(p.id))
+        }
         return <PetListView customer={selectedCustomer} onBack={handleBackToCustomerList} onSelectPet={handleSelectPet} />;
     }
 

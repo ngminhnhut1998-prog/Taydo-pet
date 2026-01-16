@@ -6,28 +6,46 @@ import { db, type Pet, type MedicalRecord } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Edit, ArrowLeft, FileText, MoreVertical } from 'lucide-react';
+import { PlusCircle, Edit, ArrowLeft, FileText, MoreVertical, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { RecordForm } from './record-form';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useSettings } from '@/contexts/settings-context';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { recordApi } from '@/lib/api';
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
 export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
     const { isReadOnly } = useSettings();
+    const { toast } = useToast();
     const records = useLiveQuery(
         () => db.records.where('thu_id').equals(pet.id).sortBy('ngay_kham').then(r => r.reverse()),
         [pet.id]
     );
     const [isRecordFormOpen, setIsRecordFormOpen] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | undefined>(undefined);
+    const [recordToDelete, setRecordToDelete] = useState<MedicalRecord | undefined>(undefined);
 
     const openRecordForm = (record?: MedicalRecord) => {
         if (isReadOnly) return;
         setSelectedRecord(record);
         setIsRecordFormOpen(true);
+    };
+
+    const handleDeleteRecord = async () => {
+        if (!recordToDelete) return;
+        try {
+            await recordApi.delete(recordToDelete.id);
+            toast({ title: "Thành công", description: "Đã xóa bệnh án." });
+        } catch (error) {
+            console.error("Failed to delete record:", error);
+            toast({ title: "Lỗi", description: "Không thể xóa bệnh án. Vui lòng thử lại.", variant: 'destructive' });
+        } finally {
+            setRecordToDelete(undefined);
+        }
     };
 
     return (
@@ -38,6 +56,20 @@ export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => vo
                 petId={pet.id}
                 existingRecord={selectedRecord}
             />
+            <AlertDialog open={!!recordToDelete} onOpenChange={(open) => !open && setRecordToDelete(undefined)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                           Hành động này sẽ xóa vĩnh viễn bệnh án ngày {recordToDelete ? format(new Date(recordToDelete.ngay_kham), 'dd/MM/yyyy') : ''}. Hành động này không thể hoàn tác.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteRecord} className='bg-destructive hover:bg-destructive/90'>Xóa</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             <div>
                 <Button variant="ghost" onClick={onBack} className="mb-4">
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -116,6 +148,10 @@ export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => vo
                                                         <DropdownMenuItem onClick={() => openRecordForm(record)}>
                                                             <Edit className="mr-2 h-4 w-4" />
                                                             Sửa bệnh án
+                                                        </DropdownMenuItem>
+                                                         <DropdownMenuItem onClick={() => setRecordToDelete(record)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Xóa bệnh án
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
