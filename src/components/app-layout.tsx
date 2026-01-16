@@ -91,6 +91,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>
             </SidebarMenuItem>
              <SidebarMenuItem>
+              <Link href="/dieu-tri" legacyBehavior passHref>
+                <SidebarMenuButton isActive={pathname === '/dieu-tri'}>
+                  <HeartPulse />
+                  Điều trị
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
               <Link href="/lich-hen" legacyBehavior passHref>
                 <SidebarMenuButton isActive={pathname === '/lich-hen'}>
                   <Calendar />
