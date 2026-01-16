@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 const initialData = {
     newCustomerData: { ten: '', so_dien_thoai: '', so_dien_thoai_2: '', dia_chi: '' },
-    newPetData: { ten: '', loai_thu: 'Chó', giong: '', mau_long: '', tuoi: undefined as number | undefined, gioi_tinh: undefined as 'Đực' | 'Cái' | undefined },
+    newPetData: { ten: '', loai_thu: 'Chó', giong: '', mau_long: '', tuoi: undefined as number | undefined, gioi_tinh: undefined as 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến' | undefined, can_nang: undefined as number | undefined },
     recordData: {
         can_nang_kham: undefined as number | undefined,
         trieu_chung: '',
@@ -367,13 +367,15 @@ export default function TreatmentClientPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Giới tính</Label>
-                                        <Select onValueChange={(value: 'Đực' | 'Cái') => setNewPetData(p => ({ ...p, gioi_tinh: value }))} value={newPetData.gioi_tinh}>
+                                        <Select onValueChange={(value: 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến') => setNewPetData(p => ({ ...p, gioi_tinh: value }))} value={newPetData.gioi_tinh}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Chọn giới tính" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="Đực">Đực</SelectItem>
                                                 <SelectItem value="Cái">Cái</SelectItem>
+                                                <SelectItem value="Đực thiến">Đực thiến</SelectItem>
+                                                <SelectItem value="Cái thiến">Cái thiến</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -393,6 +395,10 @@ export default function TreatmentClientPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-2">
+                                <Label htmlFor="weight">Cân nặng (kg)</Label>
+                                <Input id="weight" type="number" step="0.1" placeholder="5.5" value={recordData.can_nang_kham || ''} onChange={e => setRecordData(p => ({...p, can_nang_kham: e.target.value ? Number(e.target.value) : undefined}))} />
+                            </div>
                             <div className="space-y-2">
                                 <Label>Ngày khám</Label>
                                 <Popover>
@@ -404,10 +410,6 @@ export default function TreatmentClientPage() {
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={recordData.ngay_kham} onSelect={date => date && setRecordData(p => ({...p, ngay_kham: date}))} initialFocus /></PopoverContent>
                                 </Popover>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="weight">Cân nặng (kg)</Label>
-                                <Input id="weight" type="number" step="0.1" placeholder="5.5" value={recordData.can_nang_kham || ''} onChange={e => setRecordData(p => ({...p, can_nang_kham: e.target.value ? Number(e.target.value) : undefined}))} />
                             </div>
                         </div>
                         <div className="space-y-2">

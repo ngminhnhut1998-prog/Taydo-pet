@@ -21,7 +21,7 @@ const formSchema = z.object({
   mau_long: z.string().optional(),
   tuoi: z.coerce.number().int().min(0, { message: "Tuổi phải là số không âm." }).optional(),
   can_nang: z.coerce.number().positive({ message: "Cân nặng phải là số dương."}).optional(),
-  gioi_tinh: z.enum(['Đực', 'Cái']).optional(),
+  gioi_tinh: z.enum(['Đực', 'Cái', 'Đực thiến', 'Cái thiến']).optional(),
 });
 
 interface PetFormProps {
@@ -186,6 +186,8 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
                                 <SelectContent>
                                     <SelectItem value="Đực">Đực</SelectItem>
                                     <SelectItem value="Cái">Cái</SelectItem>
+                                    <SelectItem value="Đực thiến">Đực thiến</SelectItem>
+                                    <SelectItem value="Cái thiến">Cái thiến</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FormMessage />

@@ -20,7 +20,7 @@ export interface Pet {
   mau_long?: string;
   tuoi?: number;
   can_nang?: number;
-  gioi_tinh?: 'Đực' | 'Cái';
+  gioi_tinh?: 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến';
   khach_hang_id: string;
   created?: string;
   updated?: string;
