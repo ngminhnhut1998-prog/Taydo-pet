@@ -5,7 +5,7 @@ export default function LichHenPage() {
         <div>
             <div className="mb-6">
                 <h1 className="text-3xl font-bold">Quản lý Lịch hẹn</h1>
-                <p className="text-muted-foreground">Xem, lọc và quản lý tất cả các lịch hẹn tái khám.</p>
+                <p className="text-muted-foreground">Xem, lọc và quản lý các lịch hẹn tái khám của phòng khám.</p>
             </div>
             <AppointmentClientPage />
         </div>
