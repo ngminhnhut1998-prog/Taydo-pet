@@ -36,7 +36,7 @@ export default function SettingsClientPage() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `petcare-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `th-vet-backup-${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

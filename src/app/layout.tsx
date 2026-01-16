@@ -5,7 +5,7 @@ import { SettingsProvider } from '@/contexts/settings-context';
 import { AuthProvider } from '@/contexts/auth-context';
 
 export const metadata: Metadata = {
-  title: 'PetCare - Phòng Khám Thú Cưng',
+  title: 'TH vet - Phòng Khám Thú Cưng',
   description: 'Ứng dụng quản lý phòng khám thú y hiện đại',
 };
 

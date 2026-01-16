@@ -80,7 +80,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarHeader className="p-4">
           <Link href="/dashboard" className="flex items-center gap-3">
             <Logo className="w-8 h-8 text-primary" />
-            <span className="text-xl font-bold">PetCare</span>
+            <span className="text-xl font-bold">TH vet</span>
           </Link>
         </SidebarHeader>
         <SidebarContent>

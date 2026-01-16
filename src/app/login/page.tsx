@@ -54,7 +54,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
             <div className="flex justify-center items-center gap-3 mb-4">
                 <Logo className="w-10 h-10 text-primary" />
-                <span className="text-2xl font-bold">PetCare</span>
+                <span className="text-2xl font-bold">TH vet</span>
             </div>
           <CardTitle>Đăng nhập</CardTitle>
           <CardDescription>Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục.</CardDescription>

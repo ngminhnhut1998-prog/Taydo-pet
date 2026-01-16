@@ -7,7 +7,7 @@ export function WelcomeCard() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Hand className="h-6 w-6" />
-                    <span>Chào mừng trở lại, Bác sĩ Minh!</span>
+                    <span>Chào mừng trở lại, Bác sĩ Trường!</span>
                 </CardTitle>
                 <CardDescription className="text-primary-foreground/80">
                     Đây là tổng quan nhanh về phòng khám của bạn hôm nay.
