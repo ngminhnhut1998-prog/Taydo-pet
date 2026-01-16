@@ -16,6 +16,7 @@ import { useSettings } from '@/contexts/settings-context';
 const formSchema = z.object({
   ten: z.string().min(2, { message: "Tên phải có ít nhất 2 ký tự." }),
   so_dien_thoai: z.string().regex(/^\d{10,11}$/, { message: "Số điện thoại không hợp lệ." }),
+  so_dien_thoai_2: z.string().regex(/^\d{10,11}$/, { message: "Số điện thoại không hợp lệ." }).optional().or(z.literal('')),
   dia_chi: z.string().min(5, { message: "Địa chỉ phải có ít nhất 5 ký tự." }),
 });
 
@@ -34,6 +35,7 @@ export function CustomerForm({ isOpen, setIsOpen, existingCustomer, onSaveSucces
     defaultValues: {
       ten: "",
       so_dien_thoai: "",
+      so_dien_thoai_2: "",
       dia_chi: "",
     },
   });
@@ -41,9 +43,12 @@ export function CustomerForm({ isOpen, setIsOpen, existingCustomer, onSaveSucces
   useEffect(() => {
     if (isOpen) {
       if (existingCustomer) {
-        form.reset(existingCustomer);
+        form.reset({
+            ...existingCustomer,
+            so_dien_thoai_2: existingCustomer.so_dien_thoai_2 || "",
+        });
       } else {
-        form.reset({ ten: "", so_dien_thoai: "", dia_chi: "" });
+        form.reset({ ten: "", so_dien_thoai: "", so_dien_thoai_2: "", dia_chi: "" });
       }
     }
   }, [existingCustomer, form, isOpen]);
@@ -98,6 +103,19 @@ export function CustomerForm({ isOpen, setIsOpen, existingCustomer, onSaveSucces
                   <FormLabel>Số điện thoại</FormLabel>
                   <FormControl>
                     <Input placeholder="0901234567" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="so_dien_thoai_2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Số điện thoại 2 (tùy chọn)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="SĐT dự phòng..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

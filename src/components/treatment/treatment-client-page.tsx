@@ -20,7 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { cn } from '@/lib/utils';
 
 const initialData = {
-    newCustomerData: { ten: '', so_dien_thoai: '', dia_chi: '' },
+    newCustomerData: { ten: '', so_dien_thoai: '', so_dien_thoai_2: '', dia_chi: '' },
     newPetData: { ten: '', loai_thu: 'Chó', giong: '' },
     recordData: {
         can_nang_kham: undefined,
@@ -84,7 +84,8 @@ export default function TreatmentClientPage() {
         return db.customers
             .filter(customer => 
                 customer.ten.toLowerCase().includes(lowercasedTerm) || 
-                customer.so_dien_thoai.includes(debouncedSearchTerm)
+                customer.so_dien_thoai.includes(debouncedSearchTerm) ||
+                (!!customer.so_dien_thoai_2 && customer.so_dien_thoai_2.includes(debouncedSearchTerm))
             )
             .limit(10)
             .toArray();
@@ -221,7 +222,10 @@ export default function TreatmentClientPage() {
                                         {searchResults.map(customer => (
                                             <TableRow key={customer.id} className="cursor-pointer hover:bg-accent" onClick={() => handleSelectCustomer(customer)}>
                                                 <TableCell className="font-medium">{customer.ten}</TableCell>
-                                                <TableCell>{customer.so_dien_thoai}</TableCell>
+                                                <TableCell>
+                                                    {customer.so_dien_thoai}
+                                                    {customer.so_dien_thoai_2 && <div className="text-xs text-muted-foreground">{customer.so_dien_thoai_2}</div>}
+                                                </TableCell>
                                                 <TableCell className="text-muted-foreground">{customer.dia_chi}</TableCell>
                                                 <TableCell><ChevronsRight className="h-5 w-5 text-primary"/></TableCell>
                                             </TableRow>
@@ -252,7 +256,7 @@ export default function TreatmentClientPage() {
                     <CardContent>
                         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                             <p className="font-semibold text-green-800">Khách hàng đã chọn:</p>
-                            <p><strong>{selectedCustomer.ten}</strong> - {selectedCustomer.so_dien_thoai} - {selectedCustomer.dia_chi}</p>
+                            <p><strong>{selectedCustomer.ten}</strong> - {selectedCustomer.so_dien_thoai}{selectedCustomer.so_dien_thoai_2 && ` / ${selectedCustomer.so_dien_thoai_2}`} - {selectedCustomer.dia_chi}</p>
                             <Button variant="link" size="sm" className="p-0 h-auto mt-1" onClick={() => { setSelectedCustomer(null); setCustomerStatus('idle'); setSearchTerm(''); setPetStatus('idle'); setSelectedPet(null); }}>
                                 Chọn khách hàng khác
                             </Button>
@@ -269,16 +273,20 @@ export default function TreatmentClientPage() {
                     <CardContent>
                         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
                              <p className="font-semibold text-blue-800 flex items-center gap-2"><UserPlus/> Tạo khách hàng mới:</p>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                 <div className="space-y-2">
                                     <Label htmlFor="new-customer-phone">Số điện thoại</Label>
                                     <Input id="new-customer-phone" placeholder="Nhập SĐT" value={newCustomerData.so_dien_thoai} onChange={e => setNewCustomerData(p => ({...p, so_dien_thoai: e.target.value}))} />
                                 </div>
                                 <div className="space-y-2">
+                                    <Label htmlFor="new-customer-phone-2">Số điện thoại 2 (tùy chọn)</Label>
+                                    <Input id="new-customer-phone-2" placeholder="SĐT dự phòng" value={newCustomerData.so_dien_thoai_2} onChange={e => setNewCustomerData(p => ({...p, so_dien_thoai_2: e.target.value}))} />
+                                </div>
+                                <div className="space-y-2 md:col-span-2">
                                     <Label htmlFor="new-customer-name">Tên khách hàng</Label>
                                     <Input id="new-customer-name" placeholder="Nguyễn Văn A" value={newCustomerData.ten} onChange={e => setNewCustomerData(p => ({...p, ten: e.target.value}))} />
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-2 md:col-span-2">
                                     <Label htmlFor="new-customer-address">Địa chỉ</Label>
                                     <Input id="new-customer-address" placeholder="123 Đường ABC, Quận 1, TP. HCM" value={newCustomerData.dia_chi} onChange={e => setNewCustomerData(p => ({...p, dia_chi: e.target.value}))} />
                                 </div>

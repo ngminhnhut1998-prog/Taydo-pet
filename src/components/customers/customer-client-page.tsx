@@ -81,7 +81,12 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
                 <div className="flex items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-bold">{customer.ten}</h1>
-                        <p className="text-muted-foreground">{customer.so_dien_thoai} - {customer.dia_chi}</p>
+                        <p className="text-muted-foreground">
+                            {customer.so_dien_thoai}
+                            {customer.so_dien_thoai_2 && ` / ${customer.so_dien_thoai_2}`}
+                            {' - '}
+                            {customer.dia_chi}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -168,7 +173,8 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
             }))
             .filter(c => 
                 c.ten.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                c.so_dien_thoai.includes(searchTerm)
+                c.so_dien_thoai.includes(searchTerm) ||
+                (c.so_dien_thoai_2 && c.so_dien_thoai_2.includes(searchTerm))
             );
 
     }, [allCustomers, allPets, searchTerm]);
@@ -273,7 +279,10 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                                             <TableCell>
                                                 <div className="font-medium">{customer.ten}</div>
                                             </TableCell>
-                                            <TableCell>{customer.so_dien_thoai}</TableCell>
+                                            <TableCell>
+                                                {customer.so_dien_thoai}
+                                                {customer.so_dien_thoai_2 && <div className="text-xs text-muted-foreground">{customer.so_dien_thoai_2}</div>}
+                                            </TableCell>
                                             <TableCell className="text-muted-foreground max-w-xs truncate">{customer.dia_chi}</TableCell>
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-1">

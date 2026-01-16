@@ -6,6 +6,7 @@ export interface Customer {
   id: string;
   ten: string;
   so_dien_thoai: string;
+  so_dien_thoai_2?: string;
   dia_chi: string;
   created?: string;
   updated?: string;
@@ -64,6 +65,20 @@ class VetClinicDB extends Dexie {
 
   constructor() {
     super('VetClinicDB');
+    this.version(8).stores({
+      customers: 'id, ten, so_dien_thoai, so_dien_thoai_2',
+      pets: 'id, ten, khach_hang_id',
+      records: 'id, thu_id, ngay_kham, *nhac_hen.ngay',
+      syncQueue: '++id, timestamp',
+    }).upgrade(tx => {
+        console.log("Upgrading database to version 8");
+        return tx.table('customers').toCollection().modify(customer => {
+            if (customer.so_dien_thoai_2 === undefined) {
+                customer.so_dien_thoai_2 = "";
+            }
+        });
+    });
+
     this.version(7).stores({
       customers: 'id, ten, so_dien_thoai',
       pets: 'id, ten, khach_hang_id',

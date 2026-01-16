@@ -22,6 +22,7 @@ export async function exportDataToExcel() {
         return {
             customerName: customer?.ten || 'N/A',
             customerPhone: customer?.so_dien_thoai || 'N/A',
+            customerPhone2: customer?.so_dien_thoai_2 || '',
             customerAddress: customer?.dia_chi || 'N/A',
             petName: pet?.ten || 'N/A',
             petSpecies: pet?.loai_thu || 'N/A',
@@ -59,6 +60,7 @@ export async function exportDataToExcel() {
     const headers = [
         { header: 'Tên Khách Hàng', key: 'customerName', width: 25 },
         { header: 'SĐT Khách Hàng', key: 'customerPhone', width: 15 },
+        { header: 'SĐT Khách Hàng 2', key: 'customerPhone2', width: 15 },
         { header: 'Địa Chỉ', key: 'customerAddress', width: 35 },
         { header: 'Tên Thú Cưng', key: 'petName', width: 20 },
         { header: 'Loài', key: 'petSpecies', width: 15 },
@@ -131,15 +133,16 @@ export async function exportDataToExcel() {
                 worksheet.mergeCells(`A${customerMergeStart}:A${i + 2}`);
                 worksheet.mergeCells(`B${customerMergeStart}:B${i + 2}`);
                 worksheet.mergeCells(`C${customerMergeStart}:C${i + 2}`);
+                worksheet.mergeCells(`D${customerMergeStart}:D${i + 2}`);
             }
             let petMergeStart = customerMergeStart;
             for (let j = customerMergeStart - 2; j <= i; j++) {
                  const isLastPetRow = j === i;
                  if (isLastPetRow || flatData[j].petName !== flatData[j+1].petName || flatData[j].customerName !== flatData[j+1].customerName) {
                      if (petMergeStart < j + 2) {
-                        worksheet.mergeCells(`D${petMergeStart}:D${j + 2}`);
                         worksheet.mergeCells(`E${petMergeStart}:E${j + 2}`);
                         worksheet.mergeCells(`F${petMergeStart}:F${j + 2}`);
+                        worksheet.mergeCells(`G${petMergeStart}:G${j + 2}`);
                      }
                      petMergeStart = j + 3;
                  }

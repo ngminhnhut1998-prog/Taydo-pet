@@ -4,9 +4,9 @@ import type { Customer, Pet, MedicalRecord } from './db';
 const now = new Date();
 
 export const mockCustomers: Customer[] = [
-    { id: 'cust_1', ten: 'Nguyễn Văn An', so_dien_thoai: '0901234567', dia_chi: '123 Đường Lê Lợi, Quận 1, TP. HCM', created: subDays(now, 10).toISOString() },
+    { id: 'cust_1', ten: 'Nguyễn Văn An', so_dien_thoai: '0901234567', so_dien_thoai_2: '0909888777', dia_chi: '123 Đường Lê Lợi, Quận 1, TP. HCM', created: subDays(now, 10).toISOString() },
     { id: 'cust_2', ten: 'Trần Thị Bình', so_dien_thoai: '0912345678', dia_chi: '456 Đường Nguyễn Huệ, Quận 1, TP. HCM', created: subDays(now, 25).toISOString() },
-    { id: 'cust_3', ten: 'Lê Hoàng Cường', so_dien_thoai: '0987654321', dia_chi: '789 Đường Pasteur, Quận 3, TP. HCM', created: subDays(now, 5).toISOString() },
+    { id: 'cust_3', ten: 'Lê Hoàng Cường', so_dien_thoai: '0987654321', so_dien_thoai_2: '', dia_chi: '789 Đường Pasteur, Quận 3, TP. HCM', created: subDays(now, 5).toISOString() },
     { id: 'cust_4', ten: 'Phạm Thị Dung', so_dien_thoai: '0978123456', dia_chi: '101 Đường Hai Bà Trưng, Quận 1, TP. HCM', created: subDays(now, 40).toISOString() },
 ];
 
