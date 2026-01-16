@@ -92,14 +92,14 @@ export function RevenueChart({ mode, year, month }: RevenueChartProps) {
 
     if (!data) {
         return (
-            <div className="flex items-center justify-center min-h-[200px] w-full">
+            <div className="flex items-center justify-center h-[300px] w-full">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         );
     }
 
   return (
-      <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+      <ChartContainer config={chartConfig} className="h-[300px] w-full">
         <ResponsiveContainer>
             <BarChart accessibilityLayer data={data} margin={{ top: 20, right: 20, bottom: 0, left: 20}}>
             <CartesianGrid vertical={false} />
