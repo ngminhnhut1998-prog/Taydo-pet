@@ -5,7 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Customer, type Pet, type MedicalRecord } from '@/lib/db';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PlusCircle, Edit, PawPrint, Users, Search, ArrowLeft, Bone, Heart, Trash2 } from 'lucide-react';
 import { CustomerForm } from './customer-form';
@@ -14,10 +14,10 @@ import { useSettings } from '@/contexts/settings-context';
 import { MedicalHistoryView } from './medical-history-view';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 interface FullCustomerInfo extends Customer {
     pets: Pet[];
-    petNames: string;
 }
 
 // Level 2: Pet List
@@ -146,8 +146,9 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
     const { isReadOnly } = useSettings();
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
-    const allCustomers = useLiveQuery(() => db.customers.toArray(), []);
+    const allCustomers = useLiveQuery(() => db.customers.orderBy('ten').toArray(), []);
     const allPets = useLiveQuery(() => db.pets.toArray(), []);
+    const [visibleCount, setVisibleCount] = useState(30);
 
     const customers = useMemo((): FullCustomerInfo[] => {
         if (!allCustomers || !allPets) return [];
@@ -164,7 +165,6 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
             .map(c => ({
                 ...c,
                 pets: petsByCustomerId[c.id] || [],
-                petNames: (petsByCustomerId[c.id] || []).map(p => p.ten).join(', ')
             }))
             .filter(c => 
                 c.ten.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -172,6 +172,9 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
             );
 
     }, [allCustomers, allPets, searchTerm]);
+    
+    const visibleCustomers = useMemo(() => customers.slice(0, visibleCount), [customers, visibleCount]);
+    const canLoadMore = visibleCount < customers.length;
 
     const [isCustomerFormOpen, setIsCustomerFormOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
@@ -205,7 +208,8 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
             setCustomerToDelete(undefined);
         }
     };
-
+    
+    const badgeVariants: ('default' | 'secondary' | 'outline')[] = ['secondary', 'default', 'outline'];
 
     return (
         <div className="space-y-6">
@@ -252,39 +256,47 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
             <Card>
                 <CardContent className="p-0">
                     {customers && customers.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Tên khách hàng</TableHead>
-                                    <TableHead>Số điện thoại</TableHead>
-                                    <TableHead>Địa chỉ</TableHead>
-                                    <TableHead>Thú cưng</TableHead>
-                                    {!isReadOnly && <TableHead className='text-right'>Thao tác</TableHead>}
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {customers.map(customer => (
-                                    <TableRow key={customer.id} onClick={() => onSelectCustomer(customer)} className="cursor-pointer">
-                                        <TableCell>
-                                            <div className="font-medium">{customer.ten}</div>
-                                        </TableCell>
-                                        <TableCell>{customer.so_dien_thoai}</TableCell>
-                                        <TableCell className="text-muted-foreground max-w-xs truncate">{customer.dia_chi}</TableCell>
-                                        <TableCell className="text-muted-foreground">{customer.petNames}</TableCell>
-                                        {!isReadOnly && (
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openCustomerForm(customer); }}>
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setCustomerToDelete(customer); }}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            </TableCell>
-                                        )}
+                       <div className="max-h-[65vh] overflow-y-auto">
+                            <Table>
+                                <TableHeader className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
+                                    <TableRow className="hover:bg-muted">
+                                        <TableHead className="font-semibold text-foreground">Tên khách hàng</TableHead>
+                                        <TableHead className="font-semibold text-foreground">Số điện thoại</TableHead>
+                                        <TableHead className="font-semibold text-foreground">Địa chỉ</TableHead>
+                                        <TableHead className="font-semibold text-foreground">Thú cưng</TableHead>
+                                        {!isReadOnly && <TableHead className='text-right font-semibold text-foreground'>Thao tác</TableHead>}
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {visibleCustomers.map(customer => (
+                                        <TableRow key={customer.id} onClick={() => onSelectCustomer(customer)} className="cursor-pointer hover:bg-accent">
+                                            <TableCell>
+                                                <div className="font-medium">{customer.ten}</div>
+                                            </TableCell>
+                                            <TableCell>{customer.so_dien_thoai}</TableCell>
+                                            <TableCell className="text-muted-foreground max-w-xs truncate">{customer.dia_chi}</TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-wrap gap-1">
+                                                {customer.pets.map((pet, index) => (
+                                                    <Badge key={pet.id} variant={badgeVariants[index % badgeVariants.length]}>{pet.ten}</Badge>
+                                                ))}
+                                                </div>
+                                            </TableCell>
+                                            {!isReadOnly && (
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openCustomerForm(customer); }}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setCustomerToDelete(customer); }}>
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     ) : (
                          <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
                             <Users className="w-16 h-16 text-muted-foreground" />
@@ -293,6 +305,13 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                         </div>
                     )}
                 </CardContent>
+                 {canLoadMore && (
+                    <CardFooter className="py-4 justify-center border-t">
+                        <Button variant="ghost" onClick={() => setVisibleCount(v => v + 30)}>
+                            Tải thêm {Math.min(30, customers.length - visibleCount)} khách hàng
+                        </Button>
+                    </CardFooter>
+                )}
             </Card>
         </div>
     );
