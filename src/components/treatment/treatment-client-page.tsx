@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 const initialData = {
     newCustomerData: { ten: '', so_dien_thoai: '', so_dien_thoai_2: '', dia_chi: '' },
-    newPetData: { ten: '', loai_thu: 'Chó', giong: '', mau_long: '', tuoi: undefined as number | undefined, gioi_tinh: undefined as 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến' | undefined, can_nang: undefined as number | undefined },
+    newPetData: { ten: '', loai_thu: 'Chó', giong: '', mau_long: '', ngay_sinh: undefined as Date | undefined, gioi_tinh: undefined as 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến' | undefined, can_nang: undefined as number | undefined },
     recordData: {
         can_nang_kham: undefined as number | undefined,
         trieu_chung: '',
@@ -142,7 +142,11 @@ export default function TreatmentClientPage() {
                 if (!newPetData.ten || !newPetData.giong) {
                     throw new Error("Vui lòng nhập đủ tên và giống cho thú cưng mới.");
                 }
-                const newPet = await petApi.create({ ...newPetData, khach_hang_id: customerId });
+                const petDataToSave = {
+                    ...newPetData,
+                    ngay_sinh: newPetData.ngay_sinh ? newPetData.ngay_sinh.toISOString() : undefined,
+                }
+                const newPet = await petApi.create({ ...petDataToSave, khach_hang_id: customerId });
                 petId = newPet.id;
             } else if (selectedPet) {
                 petId = selectedPet.id;
@@ -362,8 +366,24 @@ export default function TreatmentClientPage() {
                                         <Input id="new-pet-color" placeholder="Vàng" value={newPetData.mau_long} onChange={e => setNewPetData(p => ({...p, mau_long: e.target.value}))} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="new-pet-age">Tuổi (năm)</Label>
-                                        <Input id="new-pet-age" type="number" placeholder="2" value={newPetData.tuoi || ''} onChange={e => setNewPetData(p => ({...p, tuoi: e.target.value ? Number(e.target.value) : undefined}))} />
+                                        <Label htmlFor="new-pet-age">Ngày sinh</Label>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !newPetData.ngay_sinh && "text-muted-foreground")}>
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {newPetData.ngay_sinh ? format(newPetData.ngay_sinh, "dd/MM/yyyy") : <span>Chọn ngày</span>}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0">
+                                                <Calendar 
+                                                    mode="single" 
+                                                    selected={newPetData.ngay_sinh} 
+                                                    onSelect={date => date && setNewPetData(p => ({...p, ngay_sinh: date}))} 
+                                                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                                                    initialFocus 
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Giới tính</Label>

@@ -13,13 +13,18 @@ import type { Pet } from '@/lib/db';
 import { useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useSettings } from '@/contexts/settings-context';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Calendar } from '../ui/calendar';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 const formSchema = z.object({
   ten: z.string().min(1, { message: "Tên không được để trống." }),
   loai_thu: z.string().min(2, { message: "Loài thú không được để trống." }),
   giong: z.string().min(2, { message: "Giống không được để trống." }),
   mau_long: z.string().optional(),
-  tuoi: z.coerce.number().int().min(0, { message: "Tuổi phải là số không âm." }).optional(),
+  ngay_sinh: z.date().optional(),
   can_nang: z.coerce.number().positive({ message: "Cân nặng phải là số dương."}).optional(),
   gioi_tinh: z.enum(['Đực', 'Cái', 'Đực thiến', 'Cái thiến']).optional(),
 });
@@ -41,7 +46,7 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
       loai_thu: "",
       giong: "",
       mau_long: "",
-      tuoi: undefined,
+      ngay_sinh: undefined,
       can_nang: undefined,
       gioi_tinh: undefined,
     },
@@ -52,22 +57,26 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
       if (existingPet) {
         form.reset({
           ...existingPet,
-          tuoi: existingPet.tuoi ?? undefined,
+          ngay_sinh: existingPet.ngay_sinh ? new Date(existingPet.ngay_sinh) : undefined,
           mau_long: existingPet.mau_long ?? "",
         });
       } else {
-        form.reset({ ten: "", loai_thu: "", giong: "", mau_long: "", tuoi: undefined, can_nang: undefined, gioi_tinh: undefined });
+        form.reset({ ten: "", loai_thu: "", giong: "", mau_long: "", ngay_sinh: undefined, can_nang: undefined, gioi_tinh: undefined });
       }
     }
   }, [existingPet, form, isOpen]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    const dataToSave = {
+        ...values,
+        ngay_sinh: values.ngay_sinh ? values.ngay_sinh.toISOString() : undefined,
+    };
     try {
       if (existingPet) {
-        await petApi.update(existingPet.id, values);
+        await petApi.update(existingPet.id, dataToSave);
         toast({ title: "Thành công", description: "Đã cập nhật thông tin thú cưng." });
       } else {
-        await petApi.create({ ...values, khach_hang_id: customerId });
+        await petApi.create({ ...dataToSave, khach_hang_id: customerId });
         toast({ title: "Thành công", description: "Đã thêm thú cưng mới." });
       }
       setIsOpen(false);
@@ -145,17 +154,45 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
                 />
                  <FormField
                     control={form.control}
-                    name="tuoi"
+                    name="ngay_sinh"
                     render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Tuổi (năm)</FormLabel>
-                        <FormControl>
-                        <Input type="number" placeholder="2" {...field} />
-                        </FormControl>
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Ngày sinh</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "dd/MM/yyyy")
+                                ) : (
+                                    <span>Chọn ngày</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
                         <FormMessage />
-                    </FormItem>
+                        </FormItem>
                     )}
-                />
+                    />
             </div>
              <div className="grid grid-cols-2 gap-4">
                 <FormField

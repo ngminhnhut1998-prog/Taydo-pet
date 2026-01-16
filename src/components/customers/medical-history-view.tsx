@@ -15,6 +15,7 @@ import { useSettings } from '@/contexts/settings-context';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { recordApi } from '@/lib/api';
+import { calculateAge } from '@/lib/utils';
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
@@ -47,6 +48,8 @@ export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => vo
             setRecordToDelete(undefined);
         }
     };
+    
+    const age = calculateAge(pet.ngay_sinh);
 
     return (
         <div className="space-y-6">
@@ -81,7 +84,7 @@ export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => vo
                          <p className="text-muted-foreground">
                             {pet.loai_thu} - {pet.giong}
                             {pet.mau_long && `, ${pet.mau_long}`}
-                            {pet.tuoi !== undefined && `, ${pet.tuoi} tuổi`}
+                            {age !== 'N/A' && `, ${age}`}
                             {pet.gioi_tinh && `, ${pet.gioi_tinh}`}
                         </p>
                     </div>

@@ -18,7 +18,7 @@ export interface Pet {
   loai_thu: string;
   giong: string;
   mau_long?: string;
-  tuoi?: number;
+  ngay_sinh?: string;
   can_nang?: number;
   gioi_tinh?: 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến';
   khach_hang_id: string;
@@ -67,9 +67,26 @@ class VetClinicDB extends Dexie {
 
   constructor() {
     super('VetClinicDB');
-    this.version(9).stores({
+    this.version(10).stores({
       customers: 'id, ten, so_dien_thoai, so_dien_thoai_2',
       pets: 'id, ten, khach_hang_id',
+      records: 'id, thu_id, ngay_kham, *nhac_hen.ngay',
+      syncQueue: '++id, timestamp',
+    }).upgrade(tx => {
+        console.log("Upgrading database to version 10");
+        const now = new Date();
+        return tx.table('pets').toCollection().modify((pet: any) => {
+            if (pet.tuoi !== undefined) {
+                // Approximate birth date from age
+                pet.ngay_sinh = new Date(now.getFullYear() - pet.tuoi, now.getMonth(), now.getDate()).toISOString();
+                delete pet.tuoi;
+            }
+        });
+    });
+
+    this.version(9).stores({
+      customers: 'id, ten, so_dien_thoai, so_dien_thoai_2',
+      pets: 'id, ten, khach_hang_id, tuoi',
       records: 'id, thu_id, ngay_kham, *nhac_hen.ngay',
       syncQueue: '++id, timestamp',
     }).upgrade(tx => {
@@ -86,7 +103,7 @@ class VetClinicDB extends Dexie {
 
     this.version(8).stores({
       customers: 'id, ten, so_dien_thoai, so_dien_thoai_2',
-      pets: 'id, ten, khach_hang_id',
+      pets: 'id, ten, khach_hang_id, tuoi',
       records: 'id, thu_id, ngay_kham, *nhac_hen.ngay',
       syncQueue: '++id, timestamp',
     }).upgrade(tx => {
@@ -100,14 +117,14 @@ class VetClinicDB extends Dexie {
 
     this.version(7).stores({
       customers: 'id, ten, so_dien_thoai',
-      pets: 'id, ten, khach_hang_id',
+      pets: 'id, ten, khach_hang_id, tuoi',
       records: 'id, thu_id, ngay_kham, *nhac_hen.ngay',
       syncQueue: '++id, timestamp',
     }).upgrade(tx => {
         console.log("Upgrading database to version 7");
         // This is a complex migration. For mock data, it's easier to just re-seed.
         // In a real app, you would carefully transform the data.
-        return tx.table('records').toCollection().modify(record => {
+        return tx.table('records').toCollection().modify((record: any) => {
             if (record.nhac_hen && typeof record.nhac_hen === 'string') {
                 record.nhac_hen = [{ ngay: record.nhac_hen, noi_dung: record.noi_dung_hen || 'Kiểm tra lại' }];
             } else if (!Array.isArray(record.nhac_hen)) {
@@ -119,7 +136,7 @@ class VetClinicDB extends Dexie {
     
     this.version(6).stores({
       customers: 'id, ten, so_dien_thoai',
-      pets: 'id, ten, khach_hang_id',
+      pets: 'id, ten, khach_hang_id, tuoi',
       records: 'id, thu_id, ngay_kham, nhac_hen',
       syncQueue: '++id, timestamp',
     }).upgrade(tx => {
@@ -133,19 +150,19 @@ class VetClinicDB extends Dexie {
       
     this.version(5).stores({
       customers: 'id, ten, so_dien_thoai',
-      pets: 'id, ten, khach_hang_id',
+      pets: 'id, ten, khach_hang_id, tuoi',
       records: 'id, thu_id, ngay_kham, nhac_hen',
       syncQueue: '++id, timestamp',
     }).upgrade(tx => {
         console.log("Upgrading database to version 5");
-        return tx.table('records').toCollection().modify(record => {
+        return tx.table('records').toCollection().modify((record: any) => {
             if (record.noi_dung_hen === undefined) record.noi_dung_hen = record.chan_doan;
         });
     });
 
     this.version(4).stores({
       customers: 'id, ten, so_dien_thoai',
-      pets: 'id, ten, khach_hang_id',
+      pets: 'id, ten, khach_hang_id, tuoi',
       records: 'id, thu_id, ngay_kham, nhac_hen',
       syncQueue: '++id, timestamp',
     }).upgrade(tx => {
@@ -160,7 +177,7 @@ class VetClinicDB extends Dexie {
     
     this.version(3).stores({
       customers: 'id, ten, so_dien_thoai',
-      pets: 'id, ten, khach_hang_id',
+      pets: 'id, ten, khach_hang_id, tuoi',
       records: 'id, thu_id, nhac_hen',
       syncQueue: '++id, timestamp',
     }).upgrade(tx => {
