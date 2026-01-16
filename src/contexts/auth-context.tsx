@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import { pb } from '@/lib/pocketbase';
 import type { Admin, Record as PocketBaseRecord } from 'pocketbase';
 
@@ -16,7 +15,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<PocketBaseRecord | Admin | null>(pb.authStore.model);
-  const router = useRouter();
   
   const isLoggedIn = pb.authStore.isValid && !!user;
 
@@ -36,7 +34,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     pb.authStore.clear();
     setUser(null);
-    router.push('/login');
+    // Use window.location.href for robust redirection
+    window.location.href = '/login';
   };
 
   return (

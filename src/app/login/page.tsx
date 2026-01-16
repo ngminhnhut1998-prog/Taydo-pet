@@ -36,10 +36,12 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(values.email, values.password);
-      // Using window.location.href to force a full page navigation
+      // Using window.location.href to force a full page navigation.
+      // This ensures the new cookie is sent to the server for the next request,
+      // allowing the middleware to grant access.
       window.location.href = '/dashboard';
     } catch (err: any) {
-      console.error(err); // For debugging
+      console.error("Lỗi đăng nhập chi tiết:", err);
       if (err?.data?.message?.includes("Failed to authenticate")) {
         setError("Đăng nhập không thành công. Vui lòng kiểm tra lại email hoặc mật khẩu.");
       } else {
