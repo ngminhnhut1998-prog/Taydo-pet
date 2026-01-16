@@ -155,20 +155,20 @@ export default function AppointmentClientPage() {
         <TabsContent value="default" className="space-y-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>15 Lịch hẹn sắp tới</CardTitle>
-                    <CardDescription>Danh sách các lịch hẹn gần nhất chưa tới ngày.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AppointmentDisplayTable appointments={defaultAppointments.upcoming} />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
                     <CardTitle>15 Lịch hẹn đã trễ gần nhất</CardTitle>
                     <CardDescription>Danh sách các lịch hẹn đã quá ngày nhưng chưa được xử lý.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <AppointmentDisplayTable appointments={defaultAppointments.past} />
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle>15 Lịch hẹn sắp tới</CardTitle>
+                    <CardDescription>Danh sách các lịch hẹn gần nhất chưa tới ngày.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <AppointmentDisplayTable appointments={defaultAppointments.upcoming} />
                 </CardContent>
             </Card>
         </TabsContent>
