@@ -27,7 +27,7 @@ export default function LoginPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: 'batruonghugo@gmail.com',
-      password: '12345678',
+      password: '',
     },
   });
 
@@ -37,11 +37,11 @@ export default function LoginPage() {
     try {
       await login(values.email, values.password);
     } catch (err: any) {
-      const errorMessage = err.data?.message || err.message || 'Đã xảy ra lỗi không xác định.';
-      if (errorMessage.includes("Failed to authenticate.")) {
-          setError("Sai mật khẩu. Mật khẩu tạm thời là '12345678'.");
+      console.error(err); // For debugging
+      if (err?.data?.message?.includes("Failed to authenticate")) {
+        setError("Đăng nhập không thành công. Vui lòng kiểm tra lại email hoặc mật khẩu.");
       } else {
-          setError(errorMessage);
+        setError("Đã xảy ra lỗi kết nối hoặc lỗi không xác định. Vui lòng thử lại.");
       }
     } finally {
         setIsLoading(false);
