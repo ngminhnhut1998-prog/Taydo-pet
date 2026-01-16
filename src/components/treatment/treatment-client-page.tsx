@@ -40,7 +40,7 @@ export default function TreatmentClientPage() {
     // Step 1: Customer state
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-    const [customerStatus, setCustomerStatus] = useState<'idle' | 'searching' | 'found' | 'new' | 'no-results'>('idle');
+    const [customerStatus, setCustomerStatus] = useState<'idle' | 'found' | 'new'>('idle');
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [newCustomerData, setNewCustomerData] = useState(initialData.newCustomerData);
 
@@ -57,12 +57,11 @@ export default function TreatmentClientPage() {
 
     // Debounce search input
     useEffect(() => {
-        if (customerStatus !== 'found' && customerStatus !== 'new') {
-            setCustomerStatus(searchTerm ? 'searching' : 'idle');
-            const handler = setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
-            return () => clearTimeout(handler);
-        }
-    }, [searchTerm, customerStatus]);
+        const handler = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
     
     const searchResults = useLiveQuery(async () => {
         if (!debouncedSearchTerm) return [];
@@ -76,15 +75,6 @@ export default function TreatmentClientPage() {
             .toArray();
     }, [debouncedSearchTerm]);
 
-    useEffect(() => {
-        if (customerStatus === 'searching') {
-            if (searchResults === undefined) return; // Still loading
-            if (searchResults.length === 0) {
-                setCustomerStatus('no-results');
-            }
-        }
-    }, [searchResults, customerStatus]);
-    
     const handleSelectCustomer = (customer: Customer) => {
         setSelectedCustomer(customer);
         setCustomerStatus('found');
@@ -170,80 +160,92 @@ export default function TreatmentClientPage() {
 
     return (
         <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Bước 1: Thông tin Khách hàng</CardTitle>
-                    <CardDescription>Nhập tên hoặc SĐT để tìm khách hàng cũ hoặc tạo mới.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {customerStatus !== 'found' && customerStatus !== 'new' ? (
-                        <div className="space-y-4">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input 
-                                    id="customer-search" 
-                                    placeholder="Tìm theo tên hoặc SĐT..." 
-                                    value={searchTerm} 
-                                    onChange={(e) => setSearchTerm(e.target.value)} 
-                                    autoFocus 
-                                    className="pl-10"
-                                />
-                            </div>
-
-                            {customerStatus === 'searching' && searchResults === undefined && (
-                                <div className="flex items-center justify-center p-4">
-                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                                </div>
-                            )}
-
-                            {customerStatus === 'searching' && searchResults && searchResults.length > 0 && (
-                                <div className="border rounded-md">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Tên khách hàng</TableHead>
-                                                <TableHead>Số điện thoại</TableHead>
-                                                <TableHead>Địa chỉ</TableHead>
-                                                <TableHead className="w-[50px]"></TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {searchResults.map(customer => (
-                                                <TableRow key={customer.id} className="cursor-pointer hover:bg-accent" onClick={() => handleSelectCustomer(customer)}>
-                                                    <TableCell className="font-medium">{customer.ten}</TableCell>
-                                                    <TableCell>{customer.so_dien_thoai}</TableCell>
-                                                    <TableCell className="text-muted-foreground">{customer.dia_chi}</TableCell>
-                                                    <TableCell><ChevronsRight className="h-5 w-5 text-primary"/></TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            )}
-
-                            {customerStatus === 'no-results' && (
-                                <div className="text-center p-6 border rounded-lg bg-secondary/50">
-                                    <p className="text-muted-foreground">Không tìm thấy khách hàng khớp với `{searchTerm}`.</p>
-                                    <Button variant="link" onClick={handleStartNewCustomer} className="mt-2">
-                                        <UserPlus className="mr-2" />
-                                        Thêm khách hàng mới với thông tin này?
-                                    </Button>
-                                </div>
-                            )}
+            {customerStatus !== 'found' && customerStatus !== 'new' && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Bước 1: Thông tin Khách hàng</CardTitle>
+                        <CardDescription>Nhập tên hoặc SĐT để tìm khách hàng cũ hoặc tạo mới.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                id="customer-search" 
+                                placeholder="Tìm theo tên hoặc SĐT..." 
+                                value={searchTerm} 
+                                onChange={(e) => setSearchTerm(e.target.value)} 
+                                autoFocus 
+                                className="pl-10"
+                            />
                         </div>
-                    ) : null}
 
-                    {customerStatus === 'found' && selectedCustomer && (
+                        {debouncedSearchTerm && searchResults === undefined && (
+                            <div className="flex items-center justify-center p-4">
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            </div>
+                        )}
+
+                        {debouncedSearchTerm && searchResults && searchResults.length > 0 && (
+                            <div className="border rounded-md">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Tên khách hàng</TableHead>
+                                            <TableHead>Số điện thoại</TableHead>
+                                            <TableHead>Địa chỉ</TableHead>
+                                            <TableHead className="w-[50px]"></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {searchResults.map(customer => (
+                                            <TableRow key={customer.id} className="cursor-pointer hover:bg-accent" onClick={() => handleSelectCustomer(customer)}>
+                                                <TableCell className="font-medium">{customer.ten}</TableCell>
+                                                <TableCell>{customer.so_dien_thoai}</TableCell>
+                                                <TableCell className="text-muted-foreground">{customer.dia_chi}</TableCell>
+                                                <TableCell><ChevronsRight className="h-5 w-5 text-primary"/></TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        )}
+
+                        {debouncedSearchTerm && searchResults && searchResults.length === 0 && (
+                            <div className="text-center p-6 border rounded-lg bg-secondary/50">
+                                <p className="text-muted-foreground">Không tìm thấy khách hàng khớp với `{searchTerm}`.</p>
+                                <Button variant="link" onClick={handleStartNewCustomer} className="mt-2">
+                                    <UserPlus className="mr-2" />
+                                    Thêm khách hàng mới với thông tin này?
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+
+            {customerStatus === 'found' && selectedCustomer && (
+                 <Card>
+                    <CardHeader>
+                         <CardTitle>Bước 1: Thông tin Khách hàng</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                             <p className="font-semibold text-green-800">Khách hàng đã chọn:</p>
                             <p><strong>{selectedCustomer.ten}</strong> - {selectedCustomer.so_dien_thoai} - {selectedCustomer.dia_chi}</p>
-                            <Button variant="link" size="sm" className="p-0 h-auto mt-1" onClick={() => { setSelectedCustomer(null); setCustomerStatus('idle')}}>
+                            <Button variant="link" size="sm" className="p-0 h-auto mt-1" onClick={() => { setSelectedCustomer(null); setCustomerStatus('idle'); setSearchTerm(''); }}>
                                 Chọn khách hàng khác
                             </Button>
                         </div>
-                    )}
+                    </CardContent>
+                 </Card>
+            )}
 
-                    {customerStatus === 'new' && (
+            {customerStatus === 'new' && (
+                 <Card>
+                    <CardHeader>
+                         <CardTitle>Bước 1: Thông tin Khách hàng</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
                              <p className="font-semibold text-blue-800 flex items-center gap-2"><UserPlus/> Tạo khách hàng mới:</p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -260,13 +262,13 @@ export default function TreatmentClientPage() {
                                     <Input id="new-customer-address" placeholder="123 Đường ABC, Quận 1, TP. HCM" value={newCustomerData.dia_chi} onChange={e => setNewCustomerData(p => ({...p, dia_chi: e.target.value}))} />
                                 </div>
                             </div>
-                             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => { setCustomerStatus('idle')}}>
+                             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => { setCustomerStatus('idle'); setSearchTerm('') }}>
                                 Hủy và tìm kiếm lại
                             </Button>
                         </div>
-                    )}
-                </CardContent>
-            </Card>
+                    </CardContent>
+                 </Card>
+            )}
 
             {showStep2 && (
                  <Card>
@@ -401,3 +403,5 @@ export default function TreatmentClientPage() {
         </div>
     );
 }
+
+    
