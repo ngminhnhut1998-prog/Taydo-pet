@@ -383,10 +383,10 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
                 name="chi_phi"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Tổng chi phí (VND)</FormLabel>
+                    <FormLabel>Tổng chi phí</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input type="number" placeholder="350000" {...field} readOnly className="pr-24 bg-muted/50 font-bold text-base"/>
+                        <Input type="number" {...field} readOnly className="pr-24 bg-muted/50 font-bold text-base"/>
                         <span className='absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground'>{currencyFormatter.format(field.value || 0)}</span>
                       </div>
                     </FormControl>

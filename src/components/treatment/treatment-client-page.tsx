@@ -29,6 +29,10 @@ const initialData = {
         don_thuoc: '',
         ghi_chu: '',
         ngay_kham: new Date(),
+        ban_kem: '',
+        chi_phi_chan_doan: undefined,
+        chi_phi_don_thuoc: undefined,
+        chi_phi_ban_kem: undefined,
         chi_phi: undefined,
     },
 };
@@ -36,6 +40,7 @@ const initialData = {
 export default function TreatmentClientPage() {
     const { isReadOnly } = useSettings();
     const { toast } = useToast();
+    const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
     // Step 1: Customer state
     const [searchTerm, setSearchTerm] = useState('');
@@ -51,9 +56,18 @@ export default function TreatmentClientPage() {
     const petsOfCustomer = useLiveQuery(() => selectedCustomer ? db.pets.where('khach_hang_id').equals(selectedCustomer.id).toArray() : [], [selectedCustomer]);
 
     // Step 3: Record state
-    const [recordData, setRecordData] = useState(initialData.recordData);
+    const [recordData, setRecordData] = useState<(typeof initialData.recordData)>(initialData.recordData);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Auto-calculate total cost
+    useEffect(() => {
+        const total = 
+            (recordData.chi_phi_chan_doan || 0) + 
+            (recordData.chi_phi_don_thuoc || 0) + 
+            (recordData.chi_phi_ban_kem || 0);
+        setRecordData(prev => ({ ...prev, chi_phi: total }));
+    }, [recordData.chi_phi_chan_doan, recordData.chi_phi_don_thuoc, recordData.chi_phi_ban_kem]);
 
     // Debounce search input
     useEffect(() => {
@@ -232,7 +246,7 @@ export default function TreatmentClientPage() {
                         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                             <p className="font-semibold text-green-800">Khách hàng đã chọn:</p>
                             <p><strong>{selectedCustomer.ten}</strong> - {selectedCustomer.so_dien_thoai} - {selectedCustomer.dia_chi}</p>
-                            <Button variant="link" size="sm" className="p-0 h-auto mt-1" onClick={() => { setSelectedCustomer(null); setCustomerStatus('idle'); setSearchTerm(''); }}>
+                            <Button variant="link" size="sm" className="p-0 h-auto mt-1" onClick={() => { setSelectedCustomer(null); setCustomerStatus('idle'); setSearchTerm(''); setPetStatus('idle'); setSelectedPet(null); }}>
                                 Chọn khách hàng khác
                             </Button>
                         </div>
@@ -357,28 +371,58 @@ export default function TreatmentClientPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="weight">Cân nặng (kg)</Label>
-                                <Input id="weight" type="number" step="0.1" placeholder="5.5" value={recordData.can_nang_kham || ''} onChange={e => setRecordData(p => ({...p, can_nang_kham: Number(e.target.value)}))} />
+                                <Input id="weight" type="number" step="0.1" placeholder="5.5" value={recordData.can_nang_kham || ''} onChange={e => setRecordData(p => ({...p, can_nang_kham: e.target.value ? Number(e.target.value) : undefined}))} />
                             </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="symptoms">Triệu chứng</Label>
                             <Textarea id="symptoms" placeholder="Bỏ ăn, nôn, đi ngoài..." value={recordData.trieu_chung} onChange={e => setRecordData(p => ({...p, trieu_chung: e.target.value}))} />
                         </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="diagnosis">Chẩn đoán</Label>
-                            <Textarea id="diagnosis" placeholder="Viêm da dị ứng..." value={recordData.chan_doan} onChange={e => setRecordData(p => ({...p, chan_doan: e.target.value}))} />
+                        
+                        <div className="flex items-start gap-4">
+                            <div className="space-y-2 flex-1">
+                                <Label htmlFor="diagnosis">Chẩn đoán</Label>
+                                <Textarea id="diagnosis" placeholder="Viêm da dị ứng..." value={recordData.chan_doan} onChange={e => setRecordData(p => ({...p, chan_doan: e.target.value}))} />
+                            </div>
+                            <div className="space-y-2 w-36">
+                                <Label htmlFor="cost-diagnosis">Phí khám</Label>
+                                <Input id="cost-diagnosis" type="number" placeholder="150000" value={recordData.chi_phi_chan_doan || ''} onChange={e => setRecordData(p => ({...p, chi_phi_chan_doan: e.target.value ? Number(e.target.value) : undefined}))} />
+                            </div>
                         </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="prescription">Đơn thuốc</Label>
-                            <Textarea id="prescription" placeholder="Thuốc A: 2 viên/ngày..." value={recordData.don_thuoc} onChange={e => setRecordData(p => ({...p, don_thuoc: e.target.value}))} />
+
+                        <div className="flex items-start gap-4">
+                            <div className="space-y-2 flex-1">
+                                <Label htmlFor="prescription">Đơn thuốc</Label>
+                                <Textarea id="prescription" placeholder="Thuốc A: 2 viên/ngày..." value={recordData.don_thuoc} onChange={e => setRecordData(p => ({...p, don_thuoc: e.target.value}))} />
+                            </div>
+                            <div className="space-y-2 w-36">
+                                <Label htmlFor="cost-prescription">Tiền thuốc</Label>
+                                <Input id="cost-prescription" type="number" placeholder="200000" value={recordData.chi_phi_don_thuoc || ''} onChange={e => setRecordData(p => ({...p, chi_phi_don_thuoc: e.target.value ? Number(e.target.value) : undefined}))} />
+                            </div>
                         </div>
+
+                        <div className="flex items-start gap-4">
+                            <div className="space-y-2 flex-1">
+                                <Label htmlFor="products">Sản phẩm/dịch vụ bán kèm</Label>
+                                <Textarea id="products" placeholder="Vòng cổ chống ve, Sữa tắm..." value={recordData.ban_kem} onChange={e => setRecordData(p => ({...p, ban_kem: e.target.value}))} />
+                            </div>
+                            <div className="space-y-2 w-36">
+                                <Label htmlFor="cost-products">Phí bán kèm</Label>
+                                <Input id="cost-products" type="number" placeholder="0" value={recordData.chi_phi_ban_kem || ''} onChange={e => setRecordData(p => ({...p, chi_phi_ban_kem: e.target.value ? Number(e.target.value) : undefined}))} />
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="notes">Ghi chú / Dặn dò</Label>
                             <Textarea id="notes" placeholder="Tái khám sau 1 tuần..." value={recordData.ghi_chu} onChange={e => setRecordData(p => ({...p, ghi_chu: e.target.value}))} />
                         </div>
-                         <div className="space-y-2">
+                        
+                        <div className="space-y-2">
                             <Label htmlFor="cost">Tổng chi phí</Label>
-                            <Input id="cost" type="number" placeholder="350000" value={recordData.chi_phi || ''} onChange={e => setRecordData(p => ({...p, chi_phi: Number(e.target.value)}))} />
+                            <div className="relative">
+                                <Input id="cost" type="number" value={recordData.chi_phi || ''} readOnly className="pr-24 bg-muted/50 font-bold text-base" />
+                                <span className='absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground'>{currencyFormatter.format(recordData.chi_phi || 0)}</span>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -403,5 +447,3 @@ export default function TreatmentClientPage() {
         </div>
     );
 }
-
-    
