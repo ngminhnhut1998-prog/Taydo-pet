@@ -28,11 +28,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     await pb.collection('users').authWithPassword(email, password);
+    // This is the crucial step to create the cookie for the middleware
+    document.cookie = pb.authStore.exportToCookie({ httpOnly: false });
     console.log("Đăng nhập thành công!", pb.authStore.model);
   };
 
   const logout = () => {
     pb.authStore.clear();
+    // Manually clear the cookie as it was set manually
+    document.cookie = "pb_auth=; Max-Age=0; path=/;";
     setUser(null);
     // Use window.location.href for robust redirection
     window.location.href = '/login';

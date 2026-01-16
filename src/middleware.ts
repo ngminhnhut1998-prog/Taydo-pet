@@ -3,15 +3,19 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const authCookie = request.cookies.get('pb_auth');
+  const isLoggedIn = !!authCookie?.value;
   const { pathname } = request.nextUrl;
 
-  // 1. Nếu đang ở trang Login, TUYỆT ĐỐI không làm gì cả, cho qua hết
-  if (pathname === '/login') {
-    return NextResponse.next();
+  const isLoginPage = pathname.startsWith('/login');
+
+  // If user is logged in, redirect them away from the login page.
+  if (isLoggedIn && isLoginPage) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // 2. Chỉ khi nào vào Dashboard mà không có vé mới đá ra
-  if (pathname.startsWith('/dashboard') && !authCookie) {
+  // If user is not logged in, redirect them to the login page,
+  // unless they are already on it.
+  if (!isLoggedIn && !isLoginPage) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -19,5 +23,14 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };
