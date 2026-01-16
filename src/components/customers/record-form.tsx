@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db, type MedicalRecord } from '@/lib/db';
 import { useEffect } from 'react';
 import { Input } from '../ui/input';
+import { useSettings } from '@/contexts/settings-context';
 
 const appointmentSchema = z.object({
   ngay: z.string().min(1, "Ngày hẹn là bắt buộc"),
@@ -48,6 +49,7 @@ interface RecordFormProps {
 }
 
 export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordFormProps) {
+  const { isReadOnly } = useSettings();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -360,7 +362,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
                   </Button>
                 </div>
               ))}
-              {fields.length < 3 && (
+              {fields.length < 3 && !isReadOnly && (
                 <Button
                   type="button"
                   variant="outline"
@@ -395,7 +397,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
 
             <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Hủy</Button>
-              <Button type="submit">Lưu bệnh án</Button>
+              <Button type="submit" disabled={isReadOnly}>Lưu bệnh án</Button>
             </DialogFooter>
           </form>
         </Form>

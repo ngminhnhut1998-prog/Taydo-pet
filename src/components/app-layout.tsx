@@ -106,16 +106,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/settings" legacyBehavior passHref>
+                <SidebarMenuButton isActive={pathname === '/settings'}>
+                  <Settings />
+                  Cài đặt
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="p-4 flex flex-col gap-2">
            <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton>
-                <Settings />
-                Cài đặt
-              </SidebarMenuButton>
-            </SidebarMenuItem>
             <SidebarMenuItem>
                <SidebarMenuButton>
                   <LogOut />

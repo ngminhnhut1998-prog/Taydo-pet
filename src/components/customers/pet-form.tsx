@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Pet } from '@/lib/db';
 import { useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useSettings } from '@/contexts/settings-context';
 
 const formSchema = z.object({
   ten: z.string().min(1, { message: "Tên không được để trống." }),
@@ -29,6 +30,7 @@ interface PetFormProps {
 }
 
 export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormProps) {
+  const { isReadOnly } = useSettings();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -153,7 +155,7 @@ export function PetForm({ isOpen, setIsOpen, customerId, existingPet }: PetFormP
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Hủy</Button>
-              <Button type="submit">Lưu thông tin</Button>
+              <Button type="submit" disabled={isReadOnly}>Lưu thông tin</Button>
             </DialogFooter>
           </form>
         </Form>

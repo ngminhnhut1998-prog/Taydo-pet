@@ -15,6 +15,7 @@ import { PetForm } from './pet-form';
 import { RecordForm } from './record-form';
 import { Badge } from '../ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { useSettings } from '@/contexts/settings-context';
 
 interface FullCustomerInfo extends Customer {
     pets: Pet[];
@@ -26,6 +27,7 @@ const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', cu
 
 // Level 3: Medical History
 function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
+    const { isReadOnly } = useSettings();
     const records = useLiveQuery(
         () => db.records.where('thu_id').equals(pet.id).sortBy('ngay_kham').then(r => r.reverse()),
         [pet.id]
@@ -34,6 +36,7 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
     const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | undefined>(undefined);
 
     const openRecordForm = (record?: MedicalRecord) => {
+        if (isReadOnly) return;
         setSelectedRecord(record);
         setIsRecordFormOpen(true);
     };
@@ -65,9 +68,11 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
                         <CardTitle>Bệnh án điện tử</CardTitle>
                         <CardDescription>Toàn bộ lịch sử khám và điều trị của {pet.ten}.</CardDescription>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => openRecordForm()}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Thêm bệnh án
-                    </Button>
+                    {!isReadOnly && (
+                        <Button variant="outline" size="sm" onClick={() => openRecordForm()}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Thêm bệnh án
+                        </Button>
+                    )}
                 </CardHeader>
                 <CardContent className="p-0">
                     {records && records.length > 0 ? (
@@ -83,7 +88,7 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
                                     <TableHead>Ghi chú</TableHead>
                                     <TableHead>Nhắc hẹn</TableHead>
                                     <TableHead>Chi phí</TableHead>
-                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                    {!isReadOnly && <TableHead><span className="sr-only">Actions</span></TableHead>}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -109,22 +114,24 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
                                             ) : '-'}
                                         </TableCell>
                                         <TableCell className="font-semibold">{record.chi_phi ? currencyFormatter.format(record.chi_phi) : '-'}</TableCell>
-                                        <TableCell>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                                        <span className="sr-only">Mở menu</span>
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => openRecordForm(record)}>
-                                                        <Edit className="mr-2 h-4 w-4" />
-                                                        Sửa bệnh án
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
+                                        {!isReadOnly && (
+                                            <TableCell>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                                            <span className="sr-only">Mở menu</span>
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => openRecordForm(record)}>
+                                                            <Edit className="mr-2 h-4 w-4" />
+                                                            Sửa bệnh án
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -133,7 +140,7 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
                         <div className="text-center py-12 text-muted-foreground">
                             <FileText className="mx-auto h-12 w-12" />
                             <p className="mt-4 font-semibold">Chưa có bệnh án nào</p>
-                            <p className="mt-1 text-sm">Hãy bắt đầu bằng cách thêm bệnh án đầu tiên cho {pet.ten}.</p>
+                            {!isReadOnly && <p className="mt-1 text-sm">Hãy bắt đầu bằng cách thêm bệnh án đầu tiên cho {pet.ten}.</p>}
                         </div>
                     )}
                 </CardContent>
@@ -144,10 +151,12 @@ function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
 
 // Level 2: Pet List
 function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomerInfo; onBack: () => void; onSelectPet: (pet: Pet) => void }) {
+    const { isReadOnly } = useSettings();
     const [isPetFormOpen, setIsPetFormOpen] = useState(false);
     const [selectedPet, setSelectedPet] = useState<Pet | undefined>(undefined);
     
     const openPetForm = (pet?: Pet) => {
+        if (isReadOnly) return;
         setSelectedPet(pet);
         setIsPetFormOpen(true);
     };
@@ -175,9 +184,11 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
 
              <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold flex items-center gap-2"><PawPrint className="h-6 w-6 text-primary" /> Danh sách thú cưng</h2>
-                <Button onClick={() => openPetForm()}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Thêm thú cưng
-                </Button>
+                {!isReadOnly && (
+                    <Button onClick={() => openPetForm()}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Thêm thú cưng
+                    </Button>
+                )}
             </div>
 
             {customer.pets && customer.pets.length > 0 ? (
@@ -189,9 +200,11 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
                                     <CardTitle>{pet.ten}</CardTitle>
                                     <p className="text-sm text-muted-foreground">{pet.giong}</p>
                                 </div>
-                                <Button variant="ghost" size="icon" className="ml-auto" onClick={(e) => { e.stopPropagation(); openPetForm(pet); }}>
-                                    <Edit className="h-4 w-4" />
-                                </Button>
+                                {!isReadOnly && (
+                                    <Button variant="ghost" size="icon" className="ml-auto" onClick={(e) => { e.stopPropagation(); openPetForm(pet); }}>
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
+                                )}
                             </CardHeader>
                             <CardContent className="grid grid-cols-2 gap-2 text-sm" onClick={() => onSelectPet(pet)}>
                                 <div className="flex items-center gap-2">
@@ -221,6 +234,7 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
 
 // Level 1: Customer List
 function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: FullCustomerInfo) => void }) {
+    const { isReadOnly } = useSettings();
     const [searchTerm, setSearchTerm] = useState('');
     const allCustomers = useLiveQuery(() => db.customers.toArray(), []);
     const allPets = useLiveQuery(() => db.pets.toArray(), []);
@@ -253,6 +267,7 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
 
     const openCustomerForm = (customer?: Customer) => {
+        if (isReadOnly) return;
         setSelectedCustomer(customer);
         setIsCustomerFormOpen(true);
     }
@@ -278,9 +293,11 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <Button onClick={() => openCustomerForm()} className="w-full md:w-auto">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Thêm khách hàng mới
-                </Button>
+                {!isReadOnly && (
+                    <Button onClick={() => openCustomerForm()} className="w-full md:w-auto">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Thêm khách hàng mới
+                    </Button>
+                )}
             </div>
             
             <Card>
@@ -293,7 +310,7 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                                     <TableHead>Số điện thoại</TableHead>
                                     <TableHead>Địa chỉ</TableHead>
                                     <TableHead>Thú cưng</TableHead>
-                                    <TableHead className='text-right'>Thao tác</TableHead>
+                                    {!isReadOnly && <TableHead className='text-right'>Thao tác</TableHead>}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -305,11 +322,13 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                                         <TableCell>{customer.so_dien_thoai}</TableCell>
                                         <TableCell className="text-muted-foreground max-w-xs truncate">{customer.dia_chi}</TableCell>
                                         <TableCell className="text-muted-foreground">{customer.petNames}</TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openCustomerForm(customer); }}>
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
+                                        {!isReadOnly && (
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openCustomerForm(customer); }}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 ))}
                             </TableBody>

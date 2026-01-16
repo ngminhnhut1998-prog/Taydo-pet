@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AppLayout } from '@/components/app-layout';
 import { Toaster } from '@/components/ui/toaster';
+import { SettingsProvider } from '@/contexts/settings-context';
 
 export const metadata: Metadata = {
   title: 'PetCare - Phòng Khám Thú Cưng',
@@ -24,7 +25,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <AppLayout>{children}</AppLayout>
+        <SettingsProvider>
+          <AppLayout>{children}</AppLayout>
+        </SettingsProvider>
         <Toaster />
       </body>
     </html>

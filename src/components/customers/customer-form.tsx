@@ -11,6 +11,7 @@ import { customerApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import type { Customer } from '@/lib/db';
 import { useEffect } from 'react';
+import { useSettings } from '@/contexts/settings-context';
 
 const formSchema = z.object({
   ten: z.string().min(2, { message: "Tên phải có ít nhất 2 ký tự." }),
@@ -25,6 +26,7 @@ interface CustomerFormProps {
 }
 
 export function CustomerForm({ isOpen, setIsOpen, existingCustomer }: CustomerFormProps) {
+  const { isReadOnly } = useSettings();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -113,7 +115,7 @@ export function CustomerForm({ isOpen, setIsOpen, existingCustomer }: CustomerFo
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Hủy</Button>
-              <Button type="submit">Lưu thông tin</Button>
+              <Button type="submit" disabled={isReadOnly}>Lưu thông tin</Button>
             </DialogFooter>
           </form>
         </Form>
