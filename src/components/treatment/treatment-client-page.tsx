@@ -108,19 +108,19 @@ export default function TreatmentClientPage() {
                  {petsOfSelectedCustomer && petsOfSelectedCustomer.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {petsOfSelectedCustomer.map(pet => (
-                            <Card key={pet.id} className="cursor-pointer hover:border-primary transition-colors flex flex-col" >
+                            <Card key={pet.id} className="flex flex-col">
                                 <CardHeader className="flex-row gap-4 items-center">
-                                    <div className="flex-1" onClick={() => handleSelectPet(pet)}>
+                                    <div className="flex-1">
                                         <CardTitle>{pet.ten}</CardTitle>
                                         <p className="text-sm text-muted-foreground">{pet.giong}</p>
                                     </div>
                                     {!isReadOnly && (
-                                        <Button variant="ghost" size="icon" className="ml-auto" onClick={(e) => { e.stopPropagation(); handleOpenEditPetForm(pet); }}>
+                                        <Button variant="ghost" size="icon" className="ml-auto flex-shrink-0" onClick={(e) => { e.stopPropagation(); handleOpenEditPetForm(pet); }}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                     )}
                                 </CardHeader>
-                                <CardContent className="grid grid-cols-2 gap-2 text-sm" onClick={() => handleSelectPet(pet)}>
+                                <CardContent className="grid grid-cols-2 gap-2 text-sm">
                                      <div className="flex items-center gap-2">
                                         <Bone className="h-4 w-4 text-muted-foreground" />
                                         <span>{pet.can_nang ?? 'N/A'} kg</span>
@@ -183,16 +183,18 @@ export default function TreatmentClientPage() {
                     {searchTerm && customers && customers.length > 0 ? (
                        <ul className="divide-y divide-border">
                            {customers.map((customer) => (
-                               <li key={customer.id} onClick={() => handleSelectCustomer(customer)} className="cursor-pointer hover:bg-muted/50">
-                                   <div className="flex items-center gap-4 p-4">
-                                       <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                            <User className="h-5 w-5" />
-                                        </div>
-                                       <div>
-                                           <p className="font-semibold text-lg">{customer.ten}</p>
-                                           <p className="text-muted-foreground">{customer.so_dien_thoai}</p>
+                               <li key={customer.id}>
+                                   <button onClick={() => handleSelectCustomer(customer)} className="w-full text-left p-4 hover:bg-muted/50 focus:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md transition-colors">
+                                       <div className="flex items-center gap-4">
+                                           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                                <User className="h-5 w-5" />
+                                            </div>
+                                           <div>
+                                               <p className="font-semibold text-lg">{customer.ten}</p>
+                                               <p className="text-muted-foreground">{customer.so_dien_thoai}</p>
+                                           </div>
                                        </div>
-                                   </div>
+                                   </button>
                                </li>
                            ))}
                        </ul>
