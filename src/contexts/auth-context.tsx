@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
@@ -29,12 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    if (email.toLowerCase() !== 'batruonghugo@gmail.com') {
-        throw new Error("Email không hợp lệ. Chỉ email được cấp phép mới có thể đăng nhập.");
-    }
     await pb.collection('users').authWithPassword(email, password);
-    router.refresh(); // to re-run middleware and get redirected
-    router.push('/dashboard');
+    console.log("Đăng nhập thành công!", pb.authStore.model);
   };
 
   const logout = () => {

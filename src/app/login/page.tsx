@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,6 +21,7 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,6 +38,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(values.email, values.password);
+      router.push('/dashboard');
     } catch (err: any) {
       console.error(err); // For debugging
       if (err?.data?.message?.includes("Failed to authenticate")) {
