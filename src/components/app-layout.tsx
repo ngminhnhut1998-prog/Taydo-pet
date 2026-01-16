@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, HeartPulse, Calendar, FileBarChart, LogOut, Moon, Sun, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardPlus, Calendar, FileBarChart, LogOut, Moon, Sun, Settings } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -93,8 +93,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
              <SidebarMenuItem>
               <Link href="/dieu-tri" legacyBehavior passHref>
                 <SidebarMenuButton isActive={pathname === '/dieu-tri'}>
-                  <HeartPulse />
-                  Nhập liệu
+                  <ClipboardPlus />
+                  Tiếp nhận
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
