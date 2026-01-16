@@ -94,7 +94,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <Link href="/dieu-tri" legacyBehavior passHref>
                 <SidebarMenuButton isActive={pathname === '/dieu-tri'}>
                   <HeartPulse />
-                  Điều trị
+                  Nhập liệu
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
