@@ -84,7 +84,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarMenu>
             <SidebarMenuItem>
               <Link href="/dashboard" legacyBehavior passHref>
-                <SidebarMenuButton isActive={pathname === '/dashboard'}>
+                <SidebarMenuButton isActive={pathname === '/dashboard'} tooltip="Bảng điều khiển">
                   <LayoutDashboard />
                   Bảng điều khiển
                 </SidebarMenuButton>
@@ -92,7 +92,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <Link href="/khach-hang" legacyBehavior passHref>
-                <SidebarMenuButton isActive={pathname === '/khach-hang'}>
+                <SidebarMenuButton isActive={pathname === '/khach-hang'} tooltip="Khách hàng">
                   <Users />
                   Khách hàng
                 </SidebarMenuButton>
@@ -100,7 +100,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenuItem>
              <SidebarMenuItem>
               <Link href="/dieu-tri" legacyBehavior passHref>
-                <SidebarMenuButton isActive={pathname === '/dieu-tri'}>
+                <SidebarMenuButton isActive={pathname === '/dieu-tri'} tooltip="Tiếp nhận">
                   <ClipboardPlus />
                   Tiếp nhận
                 </SidebarMenuButton>
@@ -108,7 +108,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenuItem>
              <SidebarMenuItem>
               <Link href="/lich-hen" legacyBehavior passHref>
-                <SidebarMenuButton isActive={pathname === '/lich-hen'}>
+                <SidebarMenuButton isActive={pathname === '/lich-hen'} tooltip="Lịch hẹn">
                   <Calendar />
                   Lịch hẹn
                 </SidebarMenuButton>
@@ -116,7 +116,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <Link href="/reports" legacyBehavior passHref>
-                <SidebarMenuButton isActive={pathname === '/reports'}>
+                <SidebarMenuButton isActive={pathname === '/reports'} tooltip="Báo cáo">
                   <FileBarChart />
                   Báo cáo
                 </SidebarMenuButton>
@@ -124,7 +124,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <Link href="/settings" legacyBehavior passHref>
-                <SidebarMenuButton isActive={pathname === '/settings'}>
+                <SidebarMenuButton isActive={pathname === '/settings'} tooltip="Cài đặt">
                   <Settings />
                   Cài đặt
                 </SidebarMenuButton>
@@ -135,7 +135,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarFooter className="p-4 flex flex-col gap-2">
            <SidebarMenu>
             <SidebarMenuItem>
-               <SidebarMenuButton onClick={handleLogout}>
+               <SidebarMenuButton onClick={handleLogout} tooltip="Đăng xuất">
                   <LogOut />
                   Đăng xuất
                 </SidebarMenuButton>
@@ -145,7 +145,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-lg sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-4">
-          <SidebarTrigger className="md:hidden" />
+          <SidebarTrigger className="sm:hidden" />
           <div className="flex items-center gap-4 ml-auto">
              <Button variant="ghost" size="icon" className="md:hidden">
               <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
