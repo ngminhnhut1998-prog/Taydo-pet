@@ -21,10 +21,9 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
-import { db, seedDatabase, clearDatabase } from '@/lib/db';
+import { syncAllData } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '@/contexts/auth-context';
 import { pb } from '@/lib/pocketbase';
 
@@ -33,23 +32,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const [isSyncing, setIsSyncing] = React.useState(false);
 
-  const customerCount = useLiveQuery(() => db.customers.count(), []);
   const { logout, user } = useAuth();
 
-  const handleSeed = async () => {
+  const handleSync = async () => {
     setIsSyncing(true);
     try {
-      await clearDatabase();
-      await seedDatabase();
+      await syncAllData();
       toast({
-        title: 'Tạo dữ liệu giả thành công',
-        description: 'Cơ sở dữ liệu đã được làm mới với dữ liệu mẫu.',
+        title: 'Đồng bộ hóa thành công',
+        description: 'Dữ liệu đã được làm mới từ máy chủ.',
       });
     } catch (error) {
       console.error(error);
       toast({
-        title: 'Lỗi tạo dữ liệu',
-        description: 'Không thể tạo dữ liệu giả. Vui lòng thử lại.',
+        title: 'Lỗi đồng bộ hóa',
+        description: 'Không thể tải dữ liệu từ máy chủ. Vui lòng thử lại.',
         variant: 'destructive',
       });
     } finally {
@@ -65,13 +62,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     });
   };
 
-  // Seed data on initial load if db is empty
+  // Sync data on initial load
   React.useEffect(() => {
-    if (customerCount === 0) {
-      handleSeed();
+    if (user) { // Only sync if user is logged in
+      handleSync();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customerCount]);
+  }, [user]);
 
 
   return (
@@ -158,10 +155,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleSeed}
+              onClick={handleSync}
               disabled={isSyncing}
             >
-              {isSyncing ? 'Đang tải...' : 'Làm mới dữ liệu'}
+              {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ dữ liệu'}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

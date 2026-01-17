@@ -1,5 +1,4 @@
 import Dexie, { type Table } from 'dexie';
-import { mockCustomers, mockPets, mockRecords } from './mock-data';
 
 // Type Definitions
 export interface Customer {
@@ -69,7 +68,7 @@ class VetClinicDB extends Dexie {
     super('VetClinicDB');
     this.version(10).stores({
       customers: 'id, ten, so_dien_thoai, so_dien_thoai_2',
-      pets: 'id, ten, khach_hang_id',
+      pets: 'id, ten, khach_hang_id, created',
       records: 'id, thu_id, ngay_kham, *nhac_hen.ngay',
       syncQueue: '++id, timestamp',
     }).upgrade(tx => {
@@ -202,28 +201,3 @@ class VetClinicDB extends Dexie {
 }
 
 export const db = new VetClinicDB();
-
-
-export async function clearDatabase() {
-    await Promise.all([
-        db.customers.clear(),
-        db.pets.clear(),
-        db.records.clear(),
-        db.syncQueue.clear(),
-    ]);
-}
-
-export async function seedDatabase() {
-    try {
-        await db.transaction('rw', db.customers, db.pets, db.records, async () => {
-            await clearDatabase();
-            console.log("Seeding database with mock data...");
-            await db.customers.bulkAdd(mockCustomers);
-            await db.pets.bulkAdd(mockPets);
-            await db.records.bulkAdd(mockRecords);
-            console.log("Database seeded successfully!");
-        });
-    } catch (error) {
-        console.error("Failed to seed database:", error);
-    }
-}

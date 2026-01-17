@@ -1,62 +1,69 @@
 import { db, type Customer, type Pet, type MedicalRecord } from './db';
+import { pb } from './pocketbase';
 
-// --- MOCK API FUNCTIONS ---
-// These functions simulate API calls by interacting directly with Dexie.
-// In a real application, you would replace these with actual API calls to a backend (like PocketBase).
-
-const createMockApiOperations = <T extends { id: string }>(table: Dexie.Table<T, string>) => {
+const createApiOperations = <T extends { id: string, created?: string, updated?: string }>(collectionName: 'customers' | 'pets' | 'records') => {
+  const table = db[collectionName];
+  
   return {
     async create(data: Omit<T, 'id' | 'created' | 'updated'>): Promise<T> {
-      console.log(`[Mock API] Creating record in ${table.name}`);
-      const newId = `mock_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      const newRecord = {
-        ...data,
-        id: newId,
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-      } as T;
-      await db.transaction('rw', table, async () => {
-        await table.add(newRecord);
-      });
-      console.log(`[Mock API] Record created with id: ${newId}`);
-      return newRecord;
+      console.log(`[API] Creating record in PocketBase collection: ${collectionName}`);
+      const newRecord = await pb.collection(collectionName).create(data);
+      console.log(`[API] Record ${newRecord.id} created in PocketBase. Syncing to local DB.`);
+      await table.add(newRecord as any);
+      return newRecord as T;
     },
 
     async update(id: string, data: Partial<Omit<T, 'id' | 'created'>>): Promise<T> {
-      console.log(`[Mock API] Updating record ${id} in ${table.name}`);
-      const dataWithUpdated = {
-        ...data,
-        updated: new Date().toISOString(),
-      };
-      await table.update(id, dataWithUpdated);
-      const updatedRecord = await table.get(id);
-      if (!updatedRecord) {
-        throw new Error("Record not found after optimistic update");
-      }
-       console.log(`[Mock API] Record ${id} updated`);
-      return updatedRecord;
+      console.log(`[API] Updating record ${id} in PocketBase collection: ${collectionName}`);
+      const updatedRecord = await pb.collection(collectionName).update(id, data);
+      console.log(`[API] Record ${id} updated in PocketBase. Syncing to local DB.`);
+      await table.update(id, data);
+      return updatedRecord as T;
     },
     
     async delete(id: string): Promise<void> {
-      console.log(`[Mock API] Deleting record ${id} from ${table.name}`);
+      console.log(`[API] Deleting record ${id} from PocketBase collection: ${collectionName}`);
+      await pb.collection(collectionName).delete(id);
+      console.log(`[API] Record ${id} deleted from PocketBase. Syncing to local DB.`);
       await table.delete(id);
-      console.log(`[Mock API] Record ${id} deleted`);
     },
   };
 };
 
-export const customerApi = createMockApiOperations<Customer>(db.customers);
-export const petApi = createMockApiOperations<Pet>(db.pets);
-export const recordApi = createMockApiOperations<MedicalRecord>(db.records);
+export const customerApi = createApiOperations<Customer>('customers');
+export const petApi = createApiOperations<Pet>('pets');
+export const recordApi = createApiOperations<MedicalRecord>('records');
 
-// --- SYNC FUNCTIONS (Placeholder) ---
-// These functions are no longer needed with mock data but are kept for future re-integration.
 export async function syncAllData() {
-  console.log('Syncing is disabled in mock mode.');
-  return Promise.resolve();
+  console.log('Starting full data sync from PocketBase to local Dexie DB...');
+  try {
+    const [customers, pets, records] = await Promise.all([
+      pb.collection('customers').getFullList<Customer>({ sort: '-created' }),
+      pb.collection('pets').getFullList<Pet>({ sort: '-created' }),
+      pb.collection('records').getFullList<MedicalRecord>({ sort: '-created' })
+    ]);
+
+    await db.transaction('rw', db.customers, db.pets, db.records, async () => {
+        // Clear existing local data before syncing
+        await db.records.clear();
+        await db.pets.clear();
+        await db.customers.clear();
+        
+        // Bulk add new data from PocketBase
+        await db.customers.bulkAdd(customers);
+        await db.pets.bulkAdd(pets);
+        await db.records.bulkAdd(records);
+    });
+
+    console.log(`Sync complete: ${customers.length} customers, ${pets.length} pets, ${records.length} records synced.`);
+  } catch (error) {
+    console.error("Full data sync from PocketBase failed:", error);
+    throw error; // Re-throw to be caught by the caller
+  }
 }
 
+// This function is no longer needed as we perform direct API calls now.
 export async function processSyncQueue() {
-   console.log('Sync queue processing is disabled in mock mode.');
+   console.log('Sync queue processing is disabled in favor of direct API calls with local DB sync.');
   return Promise.resolve();
 }
