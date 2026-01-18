@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format, startOfDay, parse, isValid } from 'date-fns';
 import { db, type Customer, type Pet, type MedicalRecord } from '@/lib/db';
@@ -62,6 +62,47 @@ export default function TreatmentClientPage() {
     const [recordData, setRecordData] = useState<(typeof initialData.recordData)>(initialData.recordData);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const autoFocusRef = useRef<HTMLInputElement>(null);
+    const newCustomerButtonRef = useRef<HTMLButtonElement>(null);
+    const breedInputRef = useRef<HTMLInputElement>(null);
+    const birthdateInputRef = useRef<HTMLInputElement>(null);
+
+    const handleSpeciesKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            setNewPetData(prev => ({
+                ...prev,
+                loai_thu: prev.loai_thu === 'Chó' ? 'Mèo' : 'Chó'
+            }));
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            breedInputRef.current?.focus();
+        }
+    };
+
+    const genderOptions = ['Đực', 'Cái', 'Đực thiến', 'Cái thiến'] as const;
+    type GenderOption = typeof genderOptions[number];
+
+    const handleGenderKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            setNewPetData(prev => {
+                const currentIndex = prev.gioi_tinh ? genderOptions.indexOf(prev.gioi_tinh) : -1;
+                let nextIndex;
+                if (e.key === 'ArrowDown') {
+                    nextIndex = (currentIndex + 1) % genderOptions.length;
+                } else { // ArrowUp
+                    nextIndex = (currentIndex - 1 + genderOptions.length) % genderOptions.length;
+                }
+                return { ...prev, gioi_tinh: genderOptions[nextIndex] as GenderOption };
+            });
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            birthdateInputRef.current?.focus();
+        }
+    };
     
     // Auto-calculate total cost
     useEffect(() => {
@@ -79,6 +120,12 @@ export default function TreatmentClientPage() {
         }, 300);
         return () => clearTimeout(handler);
     }, [searchTerm]);
+
+     useEffect(() => {
+        if (customerStatus === 'idle' && autoFocusRef.current) {
+            autoFocusRef.current.focus();
+        }
+    }, [customerStatus]);
     
     const searchResults = useLiveQuery(async () => {
         if (!debouncedSearchTerm) return [];
@@ -210,24 +257,24 @@ export default function TreatmentClientPage() {
                         <CardDescription>Nhập tên hoặc SĐT để tìm khách hàng cũ hoặc tạo mới.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                                id="customer-search" 
-                                placeholder="Tìm theo tên hoặc SĐT..." 
-                                value={searchTerm} 
-                                onChange={(e) => setSearchTerm(e.target.value)} 
-                                autoFocus 
-                                className="pl-10"
-                            />
-                        </div>
-                        <div className="flex justify-end">
-                            <Button onClick={handleStartNewCustomer}>
+                        <div className="flex flex-col md:flex-row gap-4 items-center">
+                            <div className="relative flex-grow w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    id="customer-search" 
+                                    placeholder="Tìm theo tên hoặc SĐT..." 
+                                    value={searchTerm} 
+                                    onChange={(e) => setSearchTerm(e.target.value)} 
+                                    ref={autoFocusRef}
+                                    className="pl-10"
+                                />
+                            </div>
+                            <Button ref={newCustomerButtonRef} onClick={handleStartNewCustomer} className="w-full md:w-auto flex-shrink-0">
                                 <UserPlus className="mr-2 h-4 w-4" />
                                 Thêm khách hàng mới
                             </Button>
                         </div>
-
+                        
                         {debouncedSearchTerm && searchResults === undefined && (
                             <div className="flex items-center justify-center p-4">
                                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -374,39 +421,33 @@ export default function TreatmentClientPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label>Loài thú</Label>
-                                        <Select value={newPetData.loai_thu} onValueChange={(value) => setNewPetData(p => ({ ...p, loai_thu: value as 'Chó' | 'Mèo' }))}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Chọn loài thú" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Chó">Chó</SelectItem>
-                                                <SelectItem value="Mèo">Mèo</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <Label htmlFor="new-pet-species">Loài thú</Label>
+                                        <Input
+                                            id="new-pet-species"
+                                            readOnly
+                                            value={newPetData.loai_thu}
+                                            onKeyDown={handleSpeciesKeyDown}
+                                            className="cursor-pointer font-medium"
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="new-pet-breed">Giống</Label>
-                                        <Input id="new-pet-breed" placeholder="Cỏ" value={newPetData.giong} onChange={e => setNewPetData(p => ({...p, giong: e.target.value}))} />
+                                        <Input ref={breedInputRef} id="new-pet-breed" placeholder="Cỏ" value={newPetData.giong} onChange={e => setNewPetData(p => ({...p, giong: e.target.value}))} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Giới tính</Label>
-                                        <Select value={newPetData.gioi_tinh} onValueChange={(value) => setNewPetData(p => ({ ...p, gioi_tinh: value as 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến' }))}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Chọn giới tính" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Đực">Đực</SelectItem>
-                                                <SelectItem value="Cái">Cái</SelectItem>
-                                                <SelectItem value="Đực thiến">Đực thiến</SelectItem>
-                                                <SelectItem value="Cái thiến">Cái thiến</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <Label htmlFor="new-pet-gender">Giới tính</Label>
+                                        <Input
+                                            id="new-pet-gender"
+                                            readOnly
+                                            value={newPetData.gioi_tinh || 'Chọn giới tính'}
+                                            onKeyDown={handleGenderKeyDown}
+                                            className="cursor-pointer font-medium"
+                                        />
                                     </div>
                                     
                                     <div className="space-y-2">
                                         <Label htmlFor="new-pet-birthdate">Ngày sinh</Label>
-                                        <Input id="new-pet-birthdate" placeholder="dd/MM/yyyy" value={newPetData.ngay_sinh} onChange={e => setNewPetData(p => ({...p, ngay_sinh: e.target.value}))} />
+                                        <Input ref={birthdateInputRef} id="new-pet-birthdate" placeholder="dd/MM/yyyy" value={newPetData.ngay_sinh} onChange={e => setNewPetData(p => ({...p, ngay_sinh: e.target.value}))} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="new-pet-color">Màu lông</Label>
@@ -570,7 +611,5 @@ export default function TreatmentClientPage() {
         </div>
     );
 }
-
-    
 
     
