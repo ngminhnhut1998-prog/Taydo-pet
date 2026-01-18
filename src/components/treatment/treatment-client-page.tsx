@@ -364,59 +364,53 @@ export default function TreatmentClientPage() {
                             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
                                 <p className="font-semibold text-blue-800 flex items-center gap-2"><PawPrint/> Thú cưng mới:</p>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 md:col-span-2">
                                         <Label htmlFor="new-pet-name">Tên thú cưng</Label>
                                         <Input id="new-pet-name" placeholder="Mực" value={newPetData.ten} onChange={e => setNewPetData(p => ({...p, ten: e.target.value}))} />
                                     </div>
                                     <div className="space-y-2">
+                                        <Label htmlFor="new-pet-weight">Cân nặng (kg)</Label>
+                                        <Input id="new-pet-weight" type="number" placeholder="5.5" value={newPetData.can_nang || ''} onChange={e => setNewPetData(p => ({...p, can_nang: e.target.value ? Number(e.target.value) : undefined}))} />
+                                    </div>
+
+                                    <div className="space-y-2">
                                         <Label>Loài thú</Label>
-                                        <RadioGroup value={newPetData.loai_thu} onValueChange={(value) => setNewPetData(p => ({ ...p, loai_thu: value as 'Chó' | 'Mèo' }))} className="flex items-center space-x-4 pt-2">
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="Chó" id="species-dog" />
-                                                <Label htmlFor="species-dog">Chó</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="Mèo" id="species-cat" />
-                                                <Label htmlFor="species-cat">Mèo</Label>
-                                            </div>
-                                        </RadioGroup>
+                                        <Select value={newPetData.loai_thu} onValueChange={(value) => setNewPetData(p => ({ ...p, loai_thu: value as 'Chó' | 'Mèo' }))}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Chọn loài thú" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Chó">Chó</SelectItem>
+                                                <SelectItem value="Mèo">Mèo</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="new-pet-breed">Giống</Label>
                                         <Input id="new-pet-breed" placeholder="Cỏ" value={newPetData.giong} onChange={e => setNewPetData(p => ({...p, giong: e.target.value}))} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="new-pet-color">Màu lông</Label>
-                                        <Input id="new-pet-color" placeholder="Vàng" value={newPetData.mau_long} onChange={e => setNewPetData(p => ({...p, mau_long: e.target.value}))} />
+                                        <Label>Giới tính</Label>
+                                        <Select value={newPetData.gioi_tinh} onValueChange={(value) => setNewPetData(p => ({ ...p, gioi_tinh: value as 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến' }))}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Chọn giới tính" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Đực">Đực</SelectItem>
+                                                <SelectItem value="Cái">Cái</SelectItem>
+                                                <SelectItem value="Đực thiến">Đực thiến</SelectItem>
+                                                <SelectItem value="Cái thiến">Cái thiến</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
+                                    
                                     <div className="space-y-2">
                                         <Label htmlFor="new-pet-birthdate">Ngày sinh</Label>
                                         <Input id="new-pet-birthdate" placeholder="dd/MM/yyyy" value={newPetData.ngay_sinh} onChange={e => setNewPetData(p => ({...p, ngay_sinh: e.target.value}))} />
                                     </div>
-                                     <div className="space-y-2">
-                                        <Label htmlFor="new-pet-weight">Cân nặng (kg)</Label>
-                                        <Input id="new-pet-weight" type="number" placeholder="5.5" value={newPetData.can_nang || ''} onChange={e => setNewPetData(p => ({...p, can_nang: e.target.value ? Number(e.target.value) : undefined}))} />
-                                    </div>
-                                    <div className="space-y-2 md:col-span-3">
-                                        <Label>Giới tính</Label>
-                                        <RadioGroup value={newPetData.gioi_tinh} onValueChange={(value) => setNewPetData(p => ({ ...p, gioi_tinh: value as 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến' }))} className="flex flex-wrap gap-x-6 gap-y-2 pt-2">
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="Đực" id="gender-male" />
-                                                <Label htmlFor="gender-male">Đực</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="Cái" id="gender-female" />
-                                                <Label htmlFor="gender-female">Cái</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="Đực thiến" id="gender-male-neutered" />
-                                                <Label htmlFor="gender-male-neutered">Đực thiến</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="Cái thiến" id="gender-female-neutered" />
-                                                <Label htmlFor="gender-female-neutered">Cái thiến</Label>
-                                            </div>
-                                        </RadioGroup>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new-pet-color">Màu lông</Label>
+                                        <Input id="new-pet-color" placeholder="Vàng" value={newPetData.mau_long} onChange={e => setNewPetData(p => ({...p, mau_long: e.target.value}))} />
                                     </div>
                                 </div>
                                  {customerStatus === 'found' && <Button variant="link" className="p-0 h-auto" onClick={() => setPetStatus('selecting')}>Quay lại chọn thú cưng</Button>}
@@ -576,5 +570,7 @@ export default function TreatmentClientPage() {
         </div>
     );
 }
+
+    
 
     
