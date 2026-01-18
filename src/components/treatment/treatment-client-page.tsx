@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -168,10 +169,6 @@ export default function TreatmentClientPage() {
             }
 
             // 3. Create medical record
-            if (!recordData.chan_doan || !recordData.don_thuoc) {
-                throw new Error("Vui lòng nhập chẩn đoán và đơn thuốc.");
-            }
-
             const parsedNgayKham = parse(recordData.ngay_kham, 'dd/MM/yyyy', new Date());
             if (!isValid(parsedNgayKham)) {
                 throw new Error('Ngày khám không hợp lệ. Vui lòng dùng định dạng dd/MM/yyyy.');

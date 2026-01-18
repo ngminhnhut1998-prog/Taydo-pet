@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -30,9 +31,9 @@ const formSchema = z.object({
   }),
   can_nang_kham: z.coerce.number().positive({ message: "Cân nặng phải là số dương."}).optional(),
   trieu_chung: z.string().optional(),
-  chan_doan: z.string().min(2, { message: "Chẩn đoán không được để trống." }),
+  chan_doan: z.string().optional(),
   chi_phi_chan_doan: z.coerce.number().min(0).optional(),
-  don_thuoc: z.string().min(2, { message: "Đơn thuốc không được để trống." }),
+  don_thuoc: z.string().optional(),
   chi_phi_don_thuoc: z.coerce.number().min(0).optional(),
   ban_kem: z.string().optional(),
   chi_phi_ban_kem: z.coerce.number().min(0).optional(),
@@ -95,6 +96,8 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
           })),
           can_nang_kham: existingRecord.can_nang_kham ?? undefined,
           trieu_chung: existingRecord.trieu_chung ?? "",
+          chan_doan: existingRecord.chan_doan ?? "",
+          don_thuoc: existingRecord.don_thuoc ?? "",
           ban_kem: existingRecord.ban_kem ?? "",
           ghi_chu: existingRecord.ghi_chu ?? "",
           chi_phi_chan_doan: existingRecord.chi_phi_chan_doan ?? undefined,

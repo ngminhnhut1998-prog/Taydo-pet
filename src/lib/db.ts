@@ -1,3 +1,4 @@
+
 import Dexie, { type Table } from 'dexie';
 
 // Type Definitions
@@ -35,8 +36,8 @@ export interface MedicalRecord {
   ngay_kham: string;
   can_nang_kham?: number; // Cân nặng tại thời điểm khám
   trieu_chung?: string;
-  chan_doan: string;
-  don_thuoc: string;
+  chan_doan?: string;
+  don_thuoc?: string;
   ban_kem?: string;
   ghi_chu?: string;
   nhac_hen?: Appointment[];
