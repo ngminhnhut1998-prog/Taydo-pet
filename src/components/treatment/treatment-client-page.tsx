@@ -221,6 +221,12 @@ export default function TreatmentClientPage() {
                                 className="pl-10"
                             />
                         </div>
+                        <div className="flex justify-end">
+                            <Button onClick={handleStartNewCustomer}>
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Thêm khách hàng mới
+                            </Button>
+                        </div>
 
                         {debouncedSearchTerm && searchResults === undefined && (
                             <div className="flex items-center justify-center p-4">
@@ -259,10 +265,6 @@ export default function TreatmentClientPage() {
                         {debouncedSearchTerm && searchResults && searchResults.length === 0 && (
                             <div className="text-center p-6 border rounded-lg bg-secondary/50">
                                 <p className="text-muted-foreground">Không tìm thấy khách hàng khớp với `{searchTerm}`.</p>
-                                <Button variant="link" onClick={handleStartNewCustomer} className="mt-2">
-                                    <UserPlus className="mr-2" />
-                                    Thêm khách hàng mới với thông tin này?
-                                </Button>
                             </div>
                         )}
                     </CardContent>
@@ -312,9 +314,6 @@ export default function TreatmentClientPage() {
                                     <Input id="new-customer-address" placeholder="123 Đường ABC, Quận 1, TP. HCM" value={newCustomerData.dia_chi} onChange={e => setNewCustomerData(p => ({...p, dia_chi: e.target.value}))} />
                                 </div>
                             </div>
-                             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => { setCustomerStatus('idle'); setSearchTerm('') }}>
-                                Hủy và tìm kiếm lại
-                            </Button>
                         </div>
                     </CardContent>
                  </Card>
@@ -577,3 +576,5 @@ export default function TreatmentClientPage() {
         </div>
     );
 }
+
+    
