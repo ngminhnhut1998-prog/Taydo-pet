@@ -22,14 +22,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 const initialData = {
     newCustomerData: { ten: '', so_dien_thoai: '', so_dien_thoai_2: '', dia_chi: '' },
-    newPetData: { ten: '', loai_thu: 'Chó', giong: '', mau_long: '', ngay_sinh: '', gioi_tinh: undefined as 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến' | undefined, can_nang: undefined as number | undefined },
+    newPetData: { ten: '', loai_thu: 'Chó' as 'Chó' | 'Mèo', giong: '', mau_long: '', ngay_sinh: '', gioi_tinh: undefined as 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến' | undefined, can_nang: undefined as number | undefined },
     recordData: {
         can_nang_kham: undefined as number | undefined,
         trieu_chung: '',
         chan_doan: '',
         don_thuoc: '',
         ghi_chu: '',
-        ngay_kham: new Date(),
+        ngay_kham: format(new Date(), 'dd/MM/yyyy'),
         ban_kem: '',
         chi_phi_chan_doan: undefined as number | undefined,
         chi_phi_don_thuoc: undefined as number | undefined,
@@ -113,7 +113,10 @@ export default function TreatmentClientPage() {
         setPetStatus('idle');
         setSelectedPet(null);
         setNewPetData(initialData.newPetData);
-        setRecordData(initialData.recordData);
+        setRecordData({
+            ...initialData.recordData,
+            ngay_kham: format(new Date(), 'dd/MM/yyyy'),
+        });
         toast({ title: 'Biểu mẫu đã được làm mới', description: 'Sẵn sàng để tiếp nhận bệnh nhân tiếp theo.' });
     }, [toast]);
 
@@ -168,10 +171,16 @@ export default function TreatmentClientPage() {
             if (!recordData.chan_doan || !recordData.don_thuoc) {
                 throw new Error("Vui lòng nhập chẩn đoán và đơn thuốc.");
             }
+
+            const parsedNgayKham = parse(recordData.ngay_kham, 'dd/MM/yyyy', new Date());
+            if (!isValid(parsedNgayKham)) {
+                throw new Error('Ngày khám không hợp lệ. Vui lòng dùng định dạng dd/MM/yyyy.');
+            }
+
             await recordApi.create({
                 ...recordData,
                 thu_id: petId,
-                ngay_kham: recordData.ngay_kham.toISOString(),
+                ngay_kham: parsedNgayKham.toISOString(),
                 nhac_hen: (recordData.nhac_hen || [])
                     .filter(h => h.ngay && h.noi_dung)
                     .map(h => ({
@@ -288,18 +297,18 @@ export default function TreatmentClientPage() {
                     <CardContent>
                         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
                              <p className="font-semibold text-blue-800 flex items-center gap-2"><UserPlus/> Tạo khách hàng mới:</p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                 <div className="space-y-2">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2 md:col-span-2">
+                                    <Label htmlFor="new-customer-name">Tên khách hàng</Label>
+                                    <Input id="new-customer-name" placeholder="Nguyễn Văn A" value={newCustomerData.ten} onChange={e => setNewCustomerData(p => ({...p, ten: e.target.value}))} />
+                                </div>
+                                <div className="space-y-2">
                                     <Label htmlFor="new-customer-phone">Số điện thoại</Label>
                                     <Input id="new-customer-phone" placeholder="Nhập SĐT" value={newCustomerData.so_dien_thoai} onChange={e => setNewCustomerData(p => ({...p, so_dien_thoai: e.target.value}))} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="new-customer-phone-2">Số điện thoại 2 (tùy chọn)</Label>
                                     <Input id="new-customer-phone-2" placeholder="SĐT dự phòng" value={newCustomerData.so_dien_thoai_2} onChange={e => setNewCustomerData(p => ({...p, so_dien_thoai_2: e.target.value}))} />
-                                </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="new-customer-name">Tên khách hàng</Label>
-                                    <Input id="new-customer-name" placeholder="Nguyễn Văn A" value={newCustomerData.ten} onChange={e => setNewCustomerData(p => ({...p, ten: e.target.value}))} />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
                                     <Label htmlFor="new-customer-address">Địa chỉ</Label>
@@ -364,8 +373,17 @@ export default function TreatmentClientPage() {
                                         <Input id="new-pet-name" placeholder="Mực" value={newPetData.ten} onChange={e => setNewPetData(p => ({...p, ten: e.target.value}))} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="new-pet-species">Loài thú</Label>
-                                        <Input id="new-pet-species" placeholder="Chó" value={newPetData.loai_thu} onChange={e => setNewPetData(p => ({...p, loai_thu: e.target.value}))} />
+                                        <Label>Loài thú</Label>
+                                        <RadioGroup value={newPetData.loai_thu} onValueChange={(value) => setNewPetData(p => ({ ...p, loai_thu: value as 'Chó' | 'Mèo' }))} className="flex items-center space-x-4 pt-2">
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="Chó" id="species-dog" />
+                                                <Label htmlFor="species-dog">Chó</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="Mèo" id="species-cat" />
+                                                <Label htmlFor="species-cat">Mèo</Label>
+                                            </div>
+                                        </RadioGroup>
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="new-pet-breed">Giống</Label>
@@ -377,26 +395,32 @@ export default function TreatmentClientPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="new-pet-birthdate">Ngày sinh</Label>
-                                        <Input
-                                            id="new-pet-birthdate"
-                                            placeholder="dd/MM/yyyy"
-                                            value={newPetData.ngay_sinh}
-                                            onChange={e => setNewPetData(p => ({...p, ngay_sinh: e.target.value}))}
-                                        />
+                                        <Input id="new-pet-birthdate" placeholder="dd/MM/yyyy" value={newPetData.ngay_sinh} onChange={e => setNewPetData(p => ({...p, ngay_sinh: e.target.value}))} />
                                     </div>
-                                    <div className="space-y-2">
+                                     <div className="space-y-2">
+                                        <Label htmlFor="new-pet-weight">Cân nặng (kg)</Label>
+                                        <Input id="new-pet-weight" type="number" placeholder="5.5" value={newPetData.can_nang || ''} onChange={e => setNewPetData(p => ({...p, can_nang: e.target.value ? Number(e.target.value) : undefined}))} />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-3">
                                         <Label>Giới tính</Label>
-                                        <Select onValueChange={(value: 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến') => setNewPetData(p => ({ ...p, gioi_tinh: value }))} value={newPetData.gioi_tinh}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Chọn giới tính" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Đực">Đực</SelectItem>
-                                                <SelectItem value="Cái">Cái</SelectItem>
-                                                <SelectItem value="Đực thiến">Đực thiến</SelectItem>
-                                                <SelectItem value="Cái thiến">Cái thiến</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <RadioGroup value={newPetData.gioi_tinh} onValueChange={(value) => setNewPetData(p => ({ ...p, gioi_tinh: value as 'Đực' | 'Cái' | 'Đực thiến' | 'Cái thiến' }))} className="flex flex-wrap gap-x-6 gap-y-2 pt-2">
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="Đực" id="gender-male" />
+                                                <Label htmlFor="gender-male">Đực</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="Cái" id="gender-female" />
+                                                <Label htmlFor="gender-female">Cái</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="Đực thiến" id="gender-male-neutered" />
+                                                <Label htmlFor="gender-male-neutered">Đực thiến</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="Cái thiến" id="gender-female-neutered" />
+                                                <Label htmlFor="gender-female-neutered">Cái thiến</Label>
+                                            </div>
+                                        </RadioGroup>
                                     </div>
                                 </div>
                                  {customerStatus === 'found' && <Button variant="link" className="p-0 h-auto" onClick={() => setPetStatus('selecting')}>Quay lại chọn thú cưng</Button>}
@@ -418,17 +442,14 @@ export default function TreatmentClientPage() {
                                 <Label htmlFor="weight">Cân nặng (kg)</Label>
                                 <Input id="weight" type="number" step="0.1" placeholder="5.5" value={recordData.can_nang_kham || ''} onChange={e => setRecordData(p => ({...p, can_nang_kham: e.target.value ? Number(e.target.value) : undefined}))} />
                             </div>
-                            <div className="space-y-2">
-                                <Label>Ngày khám</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !recordData.ngay_kham && "text-muted-foreground")}>
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {recordData.ngay_kham ? format(recordData.ngay_kham, "dd/MM/yyyy") : <span>Chọn ngày</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={recordData.ngay_kham} onSelect={date => date && setRecordData(p => ({...p, ngay_kham: date}))} initialFocus /></PopoverContent>
-                                </Popover>
+                           <div className="space-y-2">
+                                <Label htmlFor="ngay-kham">Ngày khám</Label>
+                                <Input
+                                    id="ngay-kham"
+                                    placeholder="dd/MM/yyyy"
+                                    value={recordData.ngay_kham}
+                                    onChange={e => setRecordData(p => ({...p, ngay_kham: e.target.value}))}
+                                />
                             </div>
                         </div>
                         <div className="space-y-2">
