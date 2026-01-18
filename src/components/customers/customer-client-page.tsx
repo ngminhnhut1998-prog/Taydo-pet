@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { calculateAge } from '@/lib/utils';
+import { customerApi, petApi, recordApi } from '@/lib/api';
 
 interface FullCustomerInfo extends Customer {
     pets: Pet[];
@@ -38,10 +39,9 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
     const handleDeletePet = async () => {
         if (!petToDelete) return;
         try {
-            await db.transaction('rw', db.pets, db.records, async () => {
-                await db.records.where('thu_id').equals(petToDelete.id).delete();
-                await db.pets.delete(petToDelete.id);
-            });
+            const recordsToDelete = await db.records.where('thu_id').equals(petToDelete.id).toArray();
+            await Promise.all(recordsToDelete.map(record => recordApi.delete(record.id)));
+            await petApi.delete(petToDelete.id);
             toast({ title: "Thành công", description: `Đã xóa thú cưng ${petToDelete.ten}.` });
         } catch (error) {
             console.error("Failed to delete pet:", error);
@@ -207,13 +207,13 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
             const petsToDelete = await db.pets.where('khach_hang_id').equals(customerToDelete.id).toArray();
             const petIds = petsToDelete.map(p => p.id);
 
-            await db.transaction('rw', db.customers, db.pets, db.records, async () => {
-                if (petIds.length > 0) {
-                    await db.records.where('thu_id').anyOf(petIds).delete();
-                }
-                await db.pets.where('khach_hang_id').equals(customerToDelete.id).delete();
-                await db.customers.delete(customerToDelete.id);
-            });
+            if (petIds.length > 0) {
+                const recordsToDelete = await db.records.where('thu_id').anyOf(petIds).toArray();
+                await Promise.all(recordsToDelete.map(record => recordApi.delete(record.id)));
+            }
+
+            await Promise.all(petsToDelete.map(pet => petApi.delete(pet.id)));
+            await customerApi.delete(customerToDelete.id);
 
             toast({ title: "Thành công", description: `Đã xóa khách hàng ${customerToDelete.ten} và toàn bộ dữ liệu liên quan.` });
         } catch (error) {
