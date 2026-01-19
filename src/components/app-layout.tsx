@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, ClipboardPlus, Calendar, FileBarChart, LogOut, Moon, Sun, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardPlus, Calendar, FileBarChart, LogOut, Moon, Sun, Settings, ChevronsLeft } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +27,21 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { useAuth } from '@/contexts/auth-context';
 import { pb } from '@/lib/pocketbase';
+
+const SidebarToggle = () => {
+    const { toggleSidebar } = useSidebar();
+    return (
+        <Button
+            variant="ghost"
+            size="icon"
+            className="hidden sm:flex h-9 w-9 shrink-0"
+            onClick={toggleSidebar}
+        >
+            <ChevronsLeft className="h-5 w-5 transition-transform ease-in-out group-data-[state=collapsed]/sidebar-wrapper:rotate-180" />
+            <span className="sr-only">Toggle sidebar</span>
+        </Button>
+    )
+}
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -74,11 +90,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <Sidebar>
-        <SidebarHeader className="p-4">
+        <SidebarHeader className="p-4 flex justify-between items-center">
           <Link href="/dashboard" className="flex items-center gap-3">
             <Logo className="w-8 h-8 text-primary" />
-            <span className="text-xl font-bold">TH vet</span>
+            <span className="text-xl font-bold transition-opacity duration-200 group-data-[state=collapsed]/sidebar-wrapper:opacity-0">TH vet</span>
           </Link>
+          <SidebarToggle />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
