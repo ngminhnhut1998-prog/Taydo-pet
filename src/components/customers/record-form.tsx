@@ -28,7 +28,7 @@ const formSchema = z.object({
     const parsedDate = parse(val, 'dd/MM/yyyy', new Date());
     return isValid(parsedDate) && val.length === 10;
   }, { message: 'Ngày không hợp lệ. Dùng định dạng dd/MM/yyyy.' }),
-  can_nang_kham: z.coerce.number().positive({ message: "Cân nặng phải là số dương."}).optional(),
+  can_nang_kham: z.coerce.number().nonnegative({ message: "Cân nặng không được là số âm."}).optional(),
   trieu_chung: z.string().optional(),
   chan_doan: z.string().optional(),
   chi_phi_chan_doan: z.coerce.number().min(0).optional(),

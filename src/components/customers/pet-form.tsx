@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from 'react-hook-form';
@@ -25,7 +26,7 @@ const formSchema = z.object({
     const parsedDate = parse(val, 'dd/MM/yyyy', new Date());
     return isValid(parsedDate) && val.length === 10;
   }, { message: 'Ngày sinh không hợp lệ. Dùng định dạng dd/MM/yyyy.'}),
-  can_nang: z.coerce.number().positive({ message: "Cân nặng phải là số dương."}).optional(),
+  can_nang: z.coerce.number().nonnegative({ message: "Cân nặng không được là số âm."}).optional(),
   gioi_tinh: z.enum(['Đực', 'Cái', 'Đực thiến', 'Cái thiến']).optional(),
 });
 

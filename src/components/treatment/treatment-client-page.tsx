@@ -420,7 +420,7 @@ export default function TreatmentClientPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="new-pet-weight">Cân nặng (kg)</Label>
-                                        <Input id="new-pet-weight" type="number" placeholder="5.5" value={newPetData.can_nang || ''} onChange={e => setNewPetData(p => ({...p, can_nang: e.target.value ? Number(e.target.value) : undefined}))} />
+                                        <Input id="new-pet-weight" type="number" placeholder="5.5" value={newPetData.can_nang ?? ''} onChange={e => setNewPetData(p => ({...p, can_nang: e.target.value ? Number(e.target.value) : undefined}))} />
                                     </div>
 
                                     <div className="space-y-2">
@@ -476,7 +476,7 @@ export default function TreatmentClientPage() {
                         <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-2">
                                 <Label htmlFor="weight">Cân nặng (kg)</Label>
-                                <Input id="weight" type="number" step="0.1" placeholder="5.5" value={recordData.can_nang_kham || ''} onChange={e => setRecordData(p => ({...p, can_nang_kham: e.target.value ? Number(e.target.value) : undefined}))} />
+                                <Input id="weight" type="number" step="0.1" placeholder="5.5" value={recordData.can_nang_kham ?? ''} onChange={e => setRecordData(p => ({...p, can_nang_kham: e.target.value ? Number(e.target.value) : undefined}))} />
                             </div>
                            <div className="space-y-2">
                                 <Label htmlFor="ngay-kham">Ngày khám</Label>
