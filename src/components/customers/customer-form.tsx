@@ -17,7 +17,9 @@ import { useSettings } from '@/contexts/settings-context';
 const formSchema = z.object({
   ten: z.string().min(2, { message: "Tên phải có ít nhất 2 ký tự." }),
   so_dien_thoai: z.string().regex(/^\d{10,11}$/, { message: "Số điện thoại không hợp lệ." }),
-  so_dien_thoai_2: z.string().regex(/^\d{10,11}$/, { message: "Số điện thoại không hợp lệ." }).optional().or(z.literal('')),
+  so_dien_thoai_2: z.string().refine((val) => !val || /^\d{10,11}$/.test(val), {
+    message: "Số điện thoại không hợp lệ.",
+  }).optional(),
   dia_chi: z.string().optional().or(z.literal('')),
 });
 
