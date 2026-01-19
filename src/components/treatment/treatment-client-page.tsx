@@ -66,6 +66,9 @@ export default function TreatmentClientPage() {
     const newCustomerButtonRef = useRef<HTMLButtonElement>(null);
     const breedInputRef = useRef<HTMLInputElement>(null);
     const birthdateInputRef = useRef<HTMLInputElement>(null);
+    const genderInputRef = useRef<HTMLInputElement>(null);
+    const speciesInputRef = useRef<HTMLInputElement>(null);
+
 
     const handleSpeciesKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -176,8 +179,8 @@ export default function TreatmentClientPage() {
             let customerId: string;
             // 1. Create or get customer
             if (customerStatus === 'new') {
-                if (!newCustomerData.ten || !newCustomerData.dia_chi || !newCustomerData.so_dien_thoai) {
-                    throw new Error("Vui lòng nhập đủ SĐT, tên và địa chỉ cho khách hàng mới.");
+                if (!newCustomerData.ten || !newCustomerData.so_dien_thoai) {
+                    throw new Error("Vui lòng nhập đủ tên và số điện thoại cho khách hàng mới.");
                 }
                 const newCustomer = await customerApi.create({ ...newCustomerData });
                 customerId = newCustomer.id;
@@ -300,7 +303,7 @@ export default function TreatmentClientPage() {
                                                     <div>{customer.so_dien_thoai}</div>
                                                     {customer.so_dien_thoai_2 && <div>{customer.so_dien_thoai_2}</div>}
                                                 </TableCell>
-                                                <TableCell className="text-muted-foreground">{customer.dia_chi}</TableCell>
+                                                <TableCell className="text-muted-foreground">{customer.dia_chi || ''}</TableCell>
                                                 <TableCell><ChevronsRight className="h-5 w-5 text-primary"/></TableCell>
                                             </TableRow>
                                         ))}
@@ -326,7 +329,7 @@ export default function TreatmentClientPage() {
                     <CardContent>
                         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                             <p className="font-semibold text-green-800">Khách hàng đã chọn:</p>
-                            <p><strong>{selectedCustomer.ten}</strong> - {selectedCustomer.so_dien_thoai}{selectedCustomer.so_dien_thoai_2 && ` / ${selectedCustomer.so_dien_thoai_2}`} - {selectedCustomer.dia_chi}</p>
+                            <p><strong>{selectedCustomer.ten}</strong> - {selectedCustomer.so_dien_thoai}{selectedCustomer.so_dien_thoai_2 && ` / ${selectedCustomer.so_dien_thoai_2}`}{selectedCustomer.dia_chi && ` - ${selectedCustomer.dia_chi}`}</p>
                             <Button variant="link" size="sm" className="p-0 h-auto mt-1" onClick={() => { setSelectedCustomer(null); setCustomerStatus('idle'); setSearchTerm(''); setPetStatus('idle'); setSelectedPet(null); }}>
                                 Chọn khách hàng khác
                             </Button>
@@ -357,7 +360,7 @@ export default function TreatmentClientPage() {
                                     <Input id="new-customer-phone-2" placeholder="SĐT dự phòng" value={newCustomerData.so_dien_thoai_2} onChange={e => setNewCustomerData(p => ({...p, so_dien_thoai_2: e.target.value}))} />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="new-customer-address">Địa chỉ</Label>
+                                    <Label htmlFor="new-customer-address">Địa chỉ (tùy chọn)</Label>
                                     <Input id="new-customer-address" placeholder="123 Đường ABC, Quận 1, TP. HCM" value={newCustomerData.dia_chi} onChange={e => setNewCustomerData(p => ({...p, dia_chi: e.target.value}))} />
                                 </div>
                             </div>
@@ -424,6 +427,7 @@ export default function TreatmentClientPage() {
                                         <Label htmlFor="new-pet-species">Loài thú</Label>
                                         <Input
                                             id="new-pet-species"
+                                            ref={speciesInputRef}
                                             readOnly
                                             value={newPetData.loai_thu}
                                             onKeyDown={handleSpeciesKeyDown}
@@ -438,6 +442,7 @@ export default function TreatmentClientPage() {
                                         <Label htmlFor="new-pet-gender">Giới tính</Label>
                                         <Input
                                             id="new-pet-gender"
+                                            ref={genderInputRef}
                                             readOnly
                                             value={newPetData.gioi_tinh || 'Chọn giới tính'}
                                             onKeyDown={handleGenderKeyDown}
@@ -446,11 +451,11 @@ export default function TreatmentClientPage() {
                                     </div>
                                     
                                     <div className="space-y-2">
-                                        <Label htmlFor="new-pet-birthdate">Ngày sinh</Label>
+                                        <Label htmlFor="new-pet-birthdate">Ngày sinh (tùy chọn)</Label>
                                         <Input ref={birthdateInputRef} id="new-pet-birthdate" placeholder="dd/MM/yyyy" value={newPetData.ngay_sinh} onChange={e => setNewPetData(p => ({...p, ngay_sinh: e.target.value}))} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="new-pet-color">Màu lông</Label>
+                                        <Label htmlFor="new-pet-color">Màu lông (tùy chọn)</Label>
                                         <Input id="new-pet-color" placeholder="Vàng" value={newPetData.mau_long} onChange={e => setNewPetData(p => ({...p, mau_long: e.target.value}))} />
                                     </div>
                                 </div>
@@ -484,13 +489,13 @@ export default function TreatmentClientPage() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="symptoms">Triệu chứng</Label>
+                            <Label htmlFor="symptoms">Triệu chứng (tùy chọn)</Label>
                             <Textarea id="symptoms" placeholder="Bỏ ăn, nôn, đi ngoài..." value={recordData.trieu_chung} onChange={e => setRecordData(p => ({...p, trieu_chung: e.target.value}))} />
                         </div>
                         
                         <div className="flex items-start gap-4">
                             <div className="space-y-2 flex-1">
-                                <Label htmlFor="diagnosis">Chẩn đoán</Label>
+                                <Label htmlFor="diagnosis">Chẩn đoán (tùy chọn)</Label>
                                 <Textarea id="diagnosis" placeholder="Viêm da dị ứng..." value={recordData.chan_doan} onChange={e => setRecordData(p => ({...p, chan_doan: e.target.value}))} />
                             </div>
                             <div className="space-y-2 w-36">
@@ -501,7 +506,7 @@ export default function TreatmentClientPage() {
 
                         <div className="flex items-start gap-4">
                             <div className="space-y-2 flex-1">
-                                <Label htmlFor="prescription">Đơn thuốc</Label>
+                                <Label htmlFor="prescription">Đơn thuốc (tùy chọn)</Label>
                                 <Textarea id="prescription" placeholder="Thuốc A: 2 viên/ngày..." value={recordData.don_thuoc} onChange={e => setRecordData(p => ({...p, don_thuoc: e.target.value}))} />
                             </div>
                             <div className="space-y-2 w-36">
@@ -611,5 +616,3 @@ export default function TreatmentClientPage() {
         </div>
     );
 }
-
-    

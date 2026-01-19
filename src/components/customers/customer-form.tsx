@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from 'react-hook-form';
@@ -17,7 +18,7 @@ const formSchema = z.object({
   ten: z.string().min(2, { message: "Tên phải có ít nhất 2 ký tự." }),
   so_dien_thoai: z.string().regex(/^\d{10,11}$/, { message: "Số điện thoại không hợp lệ." }),
   so_dien_thoai_2: z.string().regex(/^\d{10,11}$/, { message: "Số điện thoại không hợp lệ." }).optional().or(z.literal('')),
-  dia_chi: z.string().min(5, { message: "Địa chỉ phải có ít nhất 5 ký tự." }),
+  dia_chi: z.string().optional().or(z.literal('')),
 });
 
 interface CustomerFormProps {
@@ -46,6 +47,7 @@ export function CustomerForm({ isOpen, setIsOpen, existingCustomer, onSaveSucces
         form.reset({
             ...existingCustomer,
             so_dien_thoai_2: existingCustomer.so_dien_thoai_2 || "",
+            dia_chi: existingCustomer.dia_chi || "",
         });
       } else {
         form.reset({ ten: "", so_dien_thoai: "", so_dien_thoai_2: "", dia_chi: "" });
@@ -126,7 +128,7 @@ export function CustomerForm({ isOpen, setIsOpen, existingCustomer, onSaveSucces
               name="dia_chi"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Địa chỉ</FormLabel>
+                  <FormLabel>Địa chỉ (tùy chọn)</FormLabel>
                   <FormControl>
                     <Input placeholder="123 Đường ABC, Quận 1, TP. HCM" {...field} />
                   </FormControl>

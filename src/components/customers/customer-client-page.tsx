@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -85,8 +86,7 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
                         <p className="text-muted-foreground">
                             {customer.so_dien_thoai}
                             {customer.so_dien_thoai_2 && ` / ${customer.so_dien_thoai_2}`}
-                            {' - '}
-                            {customer.dia_chi}
+                            {customer.dia_chi && ` - ${customer.dia_chi}`}
                         </p>
                     </div>
                 </div>
@@ -292,7 +292,7 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                                                 <div>{customer.so_dien_thoai}</div>
                                                 {customer.so_dien_thoai_2 && <div>{customer.so_dien_thoai_2}</div>}
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground max-w-xs truncate">{customer.dia_chi}</TableCell>
+                                            <TableCell className="text-muted-foreground max-w-xs truncate">{customer.dia_chi || ''}</TableCell>
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-1">
                                                 {customer.pets.map((pet, index) => (

@@ -7,7 +7,7 @@ export interface Customer {
   ten: string;
   so_dien_thoai: string;
   so_dien_thoai_2?: string;
-  dia_chi: string;
+  dia_chi?: string;
   created?: string;
   updated?: string;
 }
