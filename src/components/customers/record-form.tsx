@@ -8,14 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Plus, Trash2 } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
-import { format, startOfDay } from 'date-fns';
+import { Plus, Trash2 } from 'lucide-react';
+import { format, startOfDay, parse, isValid } from 'date-fns';
 import { recordApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { db, type MedicalRecord } from '@/lib/db';
+import { type MedicalRecord } from '@/lib/db';
 import { useEffect } from 'react';
 import { Input } from '../ui/input';
 import { useSettings } from '@/contexts/settings-context';
@@ -26,9 +23,11 @@ const appointmentSchema = z.object({
 });
 
 const formSchema = z.object({
-  ngay_kham: z.date({
-    required_error: "Ngày khám là bắt buộc.",
-  }),
+  ngay_kham: z.string().refine((val) => {
+    if (!val) return false;
+    const parsedDate = parse(val, 'dd/MM/yyyy', new Date());
+    return isValid(parsedDate) && val.length === 10;
+  }, { message: 'Ngày không hợp lệ. Dùng định dạng dd/MM/yyyy.' }),
   can_nang_kham: z.coerce.number().positive({ message: "Cân nặng phải là số dương."}).optional(),
   trieu_chung: z.string().optional(),
   chan_doan: z.string().optional(),
@@ -55,7 +54,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      ngay_kham: new Date(),
+      ngay_kham: format(new Date(), 'dd/MM/yyyy'),
       can_nang_kham: undefined,
       trieu_chung: "",
       chan_doan: "",
@@ -89,7 +88,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
       if (existingRecord) {
         form.reset({
           ...existingRecord,
-          ngay_kham: new Date(existingRecord.ngay_kham),
+          ngay_kham: format(new Date(existingRecord.ngay_kham), 'dd/MM/yyyy'),
           nhac_hen: (existingRecord.nhac_hen || []).map(h => ({
             ngay: h.ngay ? format(new Date(h.ngay), "yyyy-MM-dd") : "",
             noi_dung: h.noi_dung,
@@ -107,7 +106,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
         });
       } else {
           form.reset({
-              ngay_kham: new Date(),
+              ngay_kham: format(new Date(), 'dd/MM/yyyy'),
               can_nang_kham: undefined,
               trieu_chung: "",
               chan_doan: "",
@@ -125,9 +124,11 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
   }, [existingRecord, form, isOpen]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    const parsedDate = parse(values.ngay_kham, 'dd/MM/yyyy', new Date());
+
     const dataToSave = {
         ...values,
-        ngay_kham: values.ngay_kham.toISOString(),
+        ngay_kham: parsedDate.toISOString(),
         nhac_hen: (values.nhac_hen || []).filter(h => h.ngay).map(h => ({
           ...h,
           ngay: startOfDay(new Date(h.ngay)).toISOString()
@@ -164,45 +165,17 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-6">
              <div className="grid grid-cols-2 gap-4">
                 <FormField
-                control={form.control}
-                name="ngay_kham"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                    <FormLabel>Ngày khám</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                            )}
-                            >
-                            {field.value ? (
-                                format(field.value, "dd/MM/yyyy")
-                            ) : (
-                                <span>Chọn một ngày</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                        </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                            }
-                            initialFocus
-                        />
-                        </PopoverContent>
-                    </Popover>
-                    <FormMessage />
+                  control={form.control}
+                  name="ngay_kham"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ngày khám</FormLabel>
+                      <FormControl>
+                        <Input placeholder="dd/MM/yyyy" {...field} />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
                 <FormField
                     control={form.control}
