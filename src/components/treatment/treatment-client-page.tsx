@@ -391,7 +391,7 @@ export default function TreatmentClientPage() {
                                         <TableBody>
                                         {petsOfCustomer && petsOfCustomer.length > 0 ? (
                                             petsOfCustomer.map(pet => (
-                                                <TableRow key={pet.id} className="cursor-pointer" onClick={() => setSelectedPet(pet)}>
+                                                <TableRow key={pet.id} className="cursor-pointer">
                                                     <TableCell><RadioGroupItem value={pet.id} id={`pet-${pet.id}`} /></TableCell>
                                                     <TableCell><Label htmlFor={`pet-${pet.id}`} className="font-medium cursor-pointer">{pet.ten}</Label></TableCell>
                                                     <TableCell className="text-muted-foreground">{pet.loai_thu}</TableCell>
