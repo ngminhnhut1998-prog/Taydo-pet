@@ -345,6 +345,7 @@ function CustomerClientPageComponent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const customerIdFromQuery = searchParams.get('customerId');
+    const petIdFromQuery = searchParams.get('petId');
 
     const allCustomers = useLiveQuery(() => db.customers.toArray());
     const allPets = useLiveQuery(() => db.pets.toArray());
@@ -360,6 +361,14 @@ function CustomerClientPageComponent() {
             if (customer) {
                 const customerPets = allPets.filter(p => p.khach_hang_id === customer.id);
                 setSelectedCustomer({ ...customer, pets: customerPets });
+
+                if (petIdFromQuery) {
+                    const pet = customerPets.find(p => p.id === petIdFromQuery);
+                    if (pet) {
+                        setSelectedPet(pet);
+                    }
+                }
+                
                 // Replace URL to remove the query param, preventing issues with back/forward
                 router.replace('/khach-hang', { scroll: false });
             }
@@ -367,7 +376,7 @@ function CustomerClientPageComponent() {
         } else if (!customerIdFromQuery) {
             setIsInitializingFromQuery(false);
         }
-    }, [customerIdFromQuery, allCustomers, allPets, router]);
+    }, [customerIdFromQuery, petIdFromQuery, allCustomers, allPets, router]);
 
 
     const handleSelectCustomer = (customer: FullCustomerInfo) => {

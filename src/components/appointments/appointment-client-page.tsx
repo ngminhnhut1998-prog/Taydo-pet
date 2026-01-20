@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRouter } from 'next/navigation';
 
 interface FullAppointmentInfo {
   record: MedicalRecord;
@@ -24,6 +25,13 @@ interface FullAppointmentInfo {
 
 // Reusable Appointment Table Component
 function AppointmentDisplayTable({ appointments }: { appointments: FullAppointmentInfo[] | undefined }) {
+  const router = useRouter();
+
+  const handleRowClick = (pet?: Pet) => {
+    if (!pet) return;
+    router.push(`/khach-hang?customerId=${pet.khach_hang_id}&petId=${pet.id}`);
+  };
+
   if (appointments === undefined) {
     return (
         <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
@@ -62,7 +70,7 @@ function AppointmentDisplayTable({ appointments }: { appointments: FullAppointme
             const isPast = isBefore(appointmentDate, today);
 
             return (
-                <TableRow key={`${record.id}-${index}`}>
+                <TableRow key={`${record.id}-${index}`} onClick={() => handleRowClick(pet)} className="cursor-pointer">
                 <TableCell>
                     <Badge variant={isPast ? "destructive" : "secondary"}>{format(appointmentDate, 'dd/MM/yyyy')}</Badge>
                 </TableCell>
