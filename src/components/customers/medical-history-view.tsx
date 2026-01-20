@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -125,18 +126,18 @@ export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => vo
                                     <TableRow key={record.id}>
                                         <TableCell className="font-bold text-foreground">{format(new Date(record.ngay_kham), 'dd/MM/yyyy')}</TableCell>
                                         <TableCell className="font-bold text-foreground">{record.can_nang_kham ?? 'N/A'}</TableCell>
-                                        <TableCell className="font-bold text-foreground max-w-xs">{record.trieu_chung}</TableCell>
-                                        <TableCell className="font-bold text-foreground">{record.chan_doan}</TableCell>
+                                        <TableCell className="font-bold text-foreground max-w-xs whitespace-pre-wrap">{record.trieu_chung}</TableCell>
+                                        <TableCell className="font-bold text-foreground whitespace-pre-wrap">{record.chan_doan}</TableCell>
                                         <TableCell className="font-bold text-foreground max-w-xs whitespace-pre-wrap">{record.don_thuoc}</TableCell>
-                                        <TableCell className="font-bold text-foreground max-w-xs">{record.ban_kem}</TableCell>
-                                        <TableCell className="font-bold text-foreground max-w-xs">{record.ghi_chu}</TableCell>
+                                        <TableCell className="font-bold text-foreground max-w-xs whitespace-pre-wrap">{record.ban_kem}</TableCell>
+                                        <TableCell className="font-bold text-foreground max-w-xs whitespace-pre-wrap">{record.ghi_chu}</TableCell>
                                         <TableCell className="font-bold text-foreground">
                                             {record.nhac_hen && record.nhac_hen.length > 0 ? (
                                                 <div className='flex flex-col gap-2'>
                                                     {record.nhac_hen.map((hen, index) => (
                                                         <div key={index}>
                                                             <Badge variant="secondary">{hen.ngay ? format(new Date(hen.ngay), 'dd/MM/yyyy') : 'N/A'}</Badge>
-                                                            <p className='text-xs text-foreground mt-1'>{hen.noi_dung}</p>
+                                                            <p className='text-xs text-foreground mt-1 whitespace-pre-wrap'>{hen.noi_dung}</p>
                                                         </div>
                                                     ))}
                                                 </div>
