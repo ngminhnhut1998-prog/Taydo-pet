@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Customer, type Pet, type MedicalRecord } from '@/lib/db';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Edit, PawPrint, Users, Search, ArrowLeft, Bone, Heart, Trash2, Palette, Cake } from 'lucide-react';
+import { PlusCircle, Edit, PawPrint, Users, Search, ArrowLeft, Bone, Heart, Trash2, Palette, Cake, Loader2 } from 'lucide-react';
 import { CustomerForm } from './customer-form';
 import { PetForm } from './pet-form';
 import { useSettings } from '@/contexts/settings-context';
@@ -18,6 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { calculateAge } from '@/lib/utils';
 import { customerApi, petApi, recordApi } from '@/lib/api';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense } from 'react';
 
 interface FullCustomerInfo extends Customer {
     pets: Pet[];
@@ -335,11 +337,34 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
     );
 }
 
+function CustomerClientPageComponent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const customerIdFromQuery = searchParams.get('customerId');
 
-// Main Component to handle navigation state
-export default function CustomerClientPage() {
+    const allCustomers = useLiveQuery(() => db.customers.toArray());
+    const allPets = useLiveQuery(() => db.pets.toArray());
+
     const [selectedCustomer, setSelectedCustomer] = useState<FullCustomerInfo | null>(null);
     const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+    const [isInitializingFromQuery, setIsInitializingFromQuery] = useState(!!customerIdFromQuery);
+
+     useEffect(() => {
+        // Only run this logic if we have a query param and the data is loaded
+        if (customerIdFromQuery && allCustomers && allPets) {
+            const customer = allCustomers.find(c => c.id === customerIdFromQuery);
+            if (customer) {
+                const customerPets = allPets.filter(p => p.khach_hang_id === customer.id);
+                setSelectedCustomer({ ...customer, pets: customerPets });
+                // Replace URL to remove the query param, preventing issues with back/forward
+                router.replace('/khach-hang', { scroll: false });
+            }
+            setIsInitializingFromQuery(false);
+        } else if (!customerIdFromQuery) {
+            setIsInitializingFromQuery(false);
+        }
+    }, [customerIdFromQuery, allCustomers, allPets, router]);
+
 
     const handleSelectCustomer = (customer: FullCustomerInfo) => {
         setSelectedCustomer(customer);
@@ -358,6 +383,14 @@ export default function CustomerClientPage() {
     const handleBackToPetList = () => {
         setSelectedPet(null);
     }
+    
+    if (isInitializingFromQuery || (!!customerIdFromQuery && (!allCustomers || !allPets))) {
+         return (
+            <div className="flex h-96 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     if (selectedCustomer && selectedPet) {
         return <MedicalHistoryView pet={selectedPet} onBack={handleBackToPetList} />;
@@ -373,4 +406,18 @@ export default function CustomerClientPage() {
     }
 
     return <CustomerListView onSelectCustomer={handleSelectCustomer} />;
+}
+
+// Main Component to handle navigation state
+export default function CustomerClientPage() {
+    // We wrap the component in Suspense to handle the use of useSearchParams
+    return (
+        <Suspense fallback={
+            <div className="flex h-96 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        }>
+            <CustomerClientPageComponent />
+        </Suspense>
+    );
 }

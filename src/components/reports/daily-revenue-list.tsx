@@ -8,6 +8,7 @@ import { startOfMonth, endOfMonth, startOfDay, format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
 interface DailyRevenueListProps {
     year: number;
@@ -116,7 +117,15 @@ export function DailyRevenueList({ year, month }: DailyRevenueListProps) {
                                     </TableRow>
                                     {day.records.map(({ record, pet, customer }) => (
                                         <TableRow key={record.id}>
-                                            <TableCell>{customer?.ten || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                {customer ? (
+                                                    <Link href={`/khach-hang?customerId=${customer.id}`} className="font-medium text-primary hover:underline">
+                                                        {customer.ten}
+                                                    </Link>
+                                                ) : (
+                                                    'N/A'
+                                                )}
+                                            </TableCell>
                                             <TableCell>{pet?.ten || 'N/A'}</TableCell>
                                             <TableCell className="text-muted-foreground">{record.chan_doan || '-'}</TableCell>
                                             <TableCell className="text-right">{currencyFormatter.format(record.chi_phi || 0)}</TableCell>
