@@ -16,10 +16,10 @@ import { MedicalHistoryView } from './medical-history-view';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { calculateAge } from '@/lib/utils';
 import { customerApi, petApi, recordApi } from '@/lib/api';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense } from 'react';
+import { format } from 'date-fns';
 
 interface FullCustomerInfo extends Customer {
     pets: Pet[];
@@ -134,7 +134,7 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Cake className="h-4 w-4 text-muted-foreground" />
-                                    <span>{calculateAge(pet.ngay_sinh)}</span>
+                                    <span>{pet.ngay_sinh ? format(new Date(pet.ngay_sinh), 'dd/MM/yyyy') : 'N/A'}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Bone className="h-4 w-4 text-muted-foreground" />
