@@ -230,10 +230,16 @@ export default function TreatmentClientPage() {
                 ngay_kham: parsedNgayKham.toISOString(),
                 nhac_hen: (recordData.nhac_hen || [])
                     .filter(h => h.ngay && h.noi_dung)
-                    .map(h => ({
-                        ...h,
-                        ngay: startOfDay(new Date(h.ngay)).toISOString()
-                })),
+                    .map(h => {
+                        const parsedHenNgay = parse(h.ngay, 'dd/MM/yyyy', new Date());
+                        if (!isValid(parsedHenNgay)) {
+                            throw new Error(`Ngày nhắc hẹn "${h.ngay}" không hợp lệ. Dùng định dạng dd/MM/yyyy.`);
+                        }
+                        return {
+                            ...h,
+                            ngay: startOfDay(parsedHenNgay).toISOString()
+                        };
+                }),
             });
 
             toast({ title: 'Thành công!', description: 'Đã lưu thông tin tiếp nhận bệnh nhân.' });
@@ -539,7 +545,8 @@ export default function TreatmentClientPage() {
                                         <Label htmlFor={`hen-ngay-${index}`} className="sr-only">Ngày hẹn</Label>
                                         <Input
                                             id={`hen-ngay-${index}`}
-                                            type="date"
+                                            type="text"
+                                            placeholder="dd/MM/yyyy"
                                             value={hen.ngay}
                                             onChange={e => {
                                                 const newHen = [...(recordData.nhac_hen || [])];

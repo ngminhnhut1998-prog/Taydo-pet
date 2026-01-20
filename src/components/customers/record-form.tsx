@@ -18,9 +18,17 @@ import { Input } from '../ui/input';
 import { useSettings } from '@/contexts/settings-context';
 
 const appointmentSchema = z.object({
-  ngay: z.string().min(1, "Ngày hẹn là bắt buộc"),
-  noi_dung: z.string().min(1, "Nội dung hẹn là bắt buộc"),
+  ngay: z.string().refine((val) => {
+    if (!val) return true; // Allow empty string
+    const parsedDate = parse(val, 'dd/MM/yyyy', new Date());
+    return isValid(parsedDate) && val.length === 10;
+  }, { message: 'Ngày không hợp lệ. Dùng định dạng dd/MM/yyyy.'}),
+  noi_dung: z.string(),
+}).refine(data => !!data.ngay === !!data.noi_dung, {
+    message: "Cả ngày và nội dung đều là bắt buộc nếu một trong hai có giá trị.",
+    path: ["noi_dung"], // shows error under noi_dung field
 });
+
 
 const formSchema = z.object({
   ngay_kham: z.string().refine((val) => {
@@ -90,7 +98,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
           ...existingRecord,
           ngay_kham: format(new Date(existingRecord.ngay_kham), 'dd/MM/yyyy'),
           nhac_hen: (existingRecord.nhac_hen || []).map(h => ({
-            ngay: h.ngay ? format(new Date(h.ngay), "yyyy-MM-dd") : "",
+            ngay: h.ngay ? format(new Date(h.ngay), "dd/MM/yyyy") : "",
             noi_dung: h.noi_dung,
           })),
           can_nang_kham: existingRecord.can_nang_kham ?? undefined,
@@ -129,9 +137,9 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
     const dataToSave = {
         ...values,
         ngay_kham: parsedDate.toISOString(),
-        nhac_hen: (values.nhac_hen || []).filter(h => h.ngay).map(h => ({
+        nhac_hen: (values.nhac_hen || []).filter(h => h.ngay && h.noi_dung).map(h => ({
           ...h,
-          ngay: startOfDay(new Date(h.ngay)).toISOString()
+          ngay: startOfDay(parse(h.ngay, 'dd/MM/yyyy', new Date())).toISOString()
         })),
     };
 
@@ -315,7 +323,7 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input type="text" placeholder="dd/MM/yyyy" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
