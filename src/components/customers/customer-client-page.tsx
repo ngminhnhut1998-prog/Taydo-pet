@@ -138,7 +138,7 @@ function PetListView({ customer, onBack, onSelectPet }: { customer: FullCustomer
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Bone className="h-4 w-4 text-muted-foreground" />
-                                    <span>{pet.can_nang ? `${pet.can_nang} kg` : 'N/A'}</span>
+                                    <span>{pet.can_nang || pet.can_nang === 0 ? `${pet.can_nang} kg` : 'N/A'}</span>
                                 </div>
                             </CardContent>
                              <div className="p-6 pt-0 mt-auto">
@@ -182,11 +182,15 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                 ...c,
                 pets: petsByCustomerId[c.id] || [],
             }))
-            .filter(c => 
-                c.ten.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                c.so_dien_thoai.includes(searchTerm) ||
-                (c.so_dien_thoai_2 && c.so_dien_thoai_2.includes(searchTerm))
-            );
+            .filter(c => {
+                const lowerCaseSearchTerm = searchTerm.toLowerCase();
+                const hasMatchingPet = c.pets.some(pet => pet.ten.toLowerCase().includes(lowerCaseSearchTerm));
+                
+                return c.ten.toLowerCase().includes(lowerCaseSearchTerm) || 
+                       c.so_dien_thoai.includes(searchTerm) ||
+                       (c.so_dien_thoai_2 && c.so_dien_thoai_2.includes(searchTerm)) ||
+                       hasMatchingPet;
+            });
 
     }, [allCustomers, allPets, searchTerm]);
     
@@ -257,7 +261,7 @@ function CustomerListView({ onSelectCustomer }: { onSelectCustomer: (customer: F
                 <div className="relative w-full md:max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input 
-                        placeholder="Tìm theo tên hoặc số điện thoại..." 
+                        placeholder="Tìm theo tên, SĐT hoặc tên thú cưng..." 
                         className="pl-10"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
