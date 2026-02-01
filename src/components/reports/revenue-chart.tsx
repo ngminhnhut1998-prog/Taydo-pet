@@ -9,7 +9,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { db } from "@/lib/db"
-import { getDaysInMonth, getMonth, getYear, startOfMonth, endOfMonth, startOfDay, endOfDay, eachDayOfInterval, format, eachMonthOfInterval, startOfYear, endOfYear, subYears } from "date-fns"
+import { getMonth, getYear, startOfMonth, endOfMonth, startOfDay, endOfDay, eachDayOfInterval, format, eachMonthOfInterval, startOfYear, endOfYear } from "date-fns"
 import { Loader2 } from "lucide-react"
 
 const chartConfig = {
@@ -28,6 +28,7 @@ interface RevenueChartProps {
 export function RevenueChart({ mode, year, month }: RevenueChartProps) {
     const data = useLiveQuery(async () => {
         const records = await db.records.toArray();
+        const petshopSales = await db.petshopSales.toArray();
         
         if (mode === 'daily') {
             if (year === undefined || month === undefined) return [];
@@ -55,19 +56,28 @@ export function RevenueChart({ mode, year, month }: RevenueChartProps) {
 
             return monthsInYear.map(monthStart => {
                 const monthEnd = endOfMonth(monthStart);
-                const monthlyTotal = records
+                const monthlyRecordTotal = records
                     .filter(r => {
                         const recordDate = new Date(r.ngay_kham);
                         return recordDate >= monthStart && recordDate <= monthEnd;
                     })
                     .reduce((sum, r) => sum + (r.chi_phi || 0), 0);
+                
+                const monthlyPetshopSale = petshopSales.find(s => {
+                    const saleDate = new Date(s.date);
+                    return getYear(saleDate) === year && getMonth(saleDate) === getMonth(monthStart);
+                });
 
-                return { name: `T${getMonth(monthStart) + 1}`, revenue: monthlyTotal };
+                const totalRevenue = monthlyRecordTotal + (monthlyPetshopSale?.amount || 0);
+
+                return { name: `T${getMonth(monthStart) + 1}`, revenue: totalRevenue };
             });
         }
 
         if (mode === 'yearly') {
-            const allYears = [...new Set(records.map(r => getYear(new Date(r.ngay_kham))))].sort();
+             const allRecordYears = records.map(r => getYear(new Date(r.ngay_kham)));
+             const allPetshopYears = petshopSales.map(s => getYear(new Date(s.date)));
+             const allYears = [...new Set([...allRecordYears, ...allPetshopYears])].sort();
 
             if (allYears.length === 0) {
                 return [];
@@ -76,14 +86,20 @@ export function RevenueChart({ mode, year, month }: RevenueChartProps) {
             return allYears.map(y => {
                 const yearStart = startOfYear(new Date(y, 0));
                 const yearEnd = endOfYear(new Date(y, 0));
-                 const yearlyTotal = records
+                const yearlyRecordTotal = records
                     .filter(r => {
                         const recordDate = new Date(r.ngay_kham);
                         return recordDate >= yearStart && recordDate <= yearEnd;
                     })
                     .reduce((sum, r) => sum + (r.chi_phi || 0), 0);
+                
+                const yearlyPetshopTotal = petshopSales
+                    .filter(s => getYear(new Date(s.date)) === y)
+                    .reduce((sum, s) => sum + s.amount, 0);
 
-                return { name: y.toString(), revenue: yearlyTotal };
+                const totalRevenue = yearlyRecordTotal + yearlyPetshopTotal;
+
+                return { name: y.toString(), revenue: totalRevenue };
             });
         }
 

@@ -1,9 +1,10 @@
+
 "use client";
 
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, ClipboardPlus, Calendar, FileBarChart, LogOut, Moon, Sun, Settings, ChevronsLeft } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardPlus, Calendar, FileBarChart, LogOut, Moon, Sun, Settings, ChevronsLeft, ShoppingBasket } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -136,6 +137,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <SidebarMenuButton isActive={pathname === '/reports'} tooltip="Báo cáo">
                   <FileBarChart />
                   Báo cáo
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/petshop" legacyBehavior passHref>
+                <SidebarMenuButton isActive={pathname === '/petshop'} tooltip="Petshop">
+                  <ShoppingBasket />
+                  Petshop
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>

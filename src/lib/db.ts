@@ -50,6 +50,14 @@ export interface MedicalRecord {
   updated?: string;
 }
 
+export interface PetshopSale {
+  id: string;
+  date: string; // ISO String, representing the first day of the month
+  amount: number;
+  created?: string;
+  updated?: string;
+}
+
 export interface SyncQueueItem {
   id?: number;
   collection: 'customers' | 'pets' | 'records';
@@ -63,10 +71,19 @@ class VetClinicDB extends Dexie {
   customers!: Table<Customer, string>;
   pets!: Table<Pet, string>;
   records!: Table<MedicalRecord, string>;
+  petshopSales!: Table<PetshopSale, string>;
   syncQueue!: Table<SyncQueueItem, number>;
 
   constructor() {
     super('VetClinicDB');
+    this.version(11).stores({
+      customers: 'id, ten, so_dien_thoai, so_dien_thoai_2',
+      pets: 'id, ten, khach_hang_id, created',
+      records: 'id, thu_id, ngay_kham, *nhac_hen.ngay',
+      petshopSales: 'id, date',
+      syncQueue: '++id, timestamp',
+    });
+
     this.version(10).stores({
       customers: 'id, ten, so_dien_thoai, so_dien_thoai_2',
       pets: 'id, ten, khach_hang_id, created',

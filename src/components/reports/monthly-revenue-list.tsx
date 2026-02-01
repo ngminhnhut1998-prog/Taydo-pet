@@ -3,7 +3,7 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
-import { startOfYear, endOfYear, eachMonthOfInterval, getMonth, endOfMonth } from "date-fns";
+import { startOfYear, endOfYear, eachMonthOfInterval, getMonth, getYear, endOfMonth } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Loader2 } from "lucide-react";
@@ -18,6 +18,7 @@ export function MonthlyRevenueList({ year }: MonthlyRevenueListProps) {
 
     const monthlyData = useLiveQuery(async () => {
         const records = await db.records.toArray();
+        const petshopSales = await db.petshopSales.toArray();
         const targetDate = new Date(year, 0);
         const interval = { start: startOfYear(targetDate), end: endOfYear(targetDate) };
         const monthsInYear = eachMonthOfInterval(interval);
@@ -29,16 +30,24 @@ export function MonthlyRevenueList({ year }: MonthlyRevenueListProps) {
                 return recordDate >= monthStart && recordDate <= monthEnd;
             });
 
-            const monthlyTotal = monthlyRecords.reduce((sum, r) => sum + (r.chi_phi || 0), 0);
+            const recordRevenue = monthlyRecords.reduce((sum, r) => sum + (r.chi_phi || 0), 0);
             
+            const petshopSale = petshopSales.find(s => {
+                const saleDate = new Date(s.date);
+                return getYear(saleDate) === year && getMonth(saleDate) === getMonth(monthStart);
+            });
+            const petshopRevenue = petshopSale?.amount || 0;
+
             return { 
                 month: `Tháng ${getMonth(monthStart) + 1}`,
-                revenue: monthlyTotal,
+                recordRevenue,
+                petshopRevenue,
+                totalRevenue: recordRevenue + petshopRevenue,
                 visitCount: monthlyRecords.length,
             };
-        }).filter(item => item.revenue > 0);
+        }).filter(item => item.totalRevenue > 0);
 
-        const yearlyTotal = dataWithRevenue.reduce((sum, item) => sum + item.revenue, 0);
+        const yearlyTotal = dataWithRevenue.reduce((sum, item) => sum + item.totalRevenue, 0);
 
         return { monthly: dataWithRevenue, total: yearlyTotal };
 
@@ -64,9 +73,11 @@ export function MonthlyRevenueList({ year }: MonthlyRevenueListProps) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[150px]">Tháng</TableHead>
-                                <TableHead className="text-center">Số lượt khám</TableHead>
-                                <TableHead className="text-right">Doanh thu</TableHead>
+                                <TableHead className="w-1/4">Tháng</TableHead>
+                                <TableHead className="text-center w-1/4">Số lượt khám</TableHead>
+                                <TableHead className="text-right w-1/4">Doanh thu Khám</TableHead>
+                                <TableHead className="text-right w-1/4">Doanh thu Petshop</TableHead>
+                                <TableHead className="text-right w-1/4 font-bold text-foreground">Tổng cộng</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -74,13 +85,15 @@ export function MonthlyRevenueList({ year }: MonthlyRevenueListProps) {
                                 <TableRow key={item.month}>
                                     <TableCell className="font-medium">{item.month}</TableCell>
                                     <TableCell className="text-center">{item.visitCount}</TableCell>
-                                    <TableCell className="text-right">{currencyFormatter.format(item.revenue)}</TableCell>
+                                    <TableCell className="text-right">{currencyFormatter.format(item.recordRevenue)}</TableCell>
+                                    <TableCell className="text-right">{currencyFormatter.format(item.petshopRevenue)}</TableCell>
+                                    <TableCell className="text-right font-semibold">{currencyFormatter.format(item.totalRevenue)}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                          <TableFooter>
                             <TableRow>
-                                <TableCell colSpan={2} className="font-bold text-base">Tổng cộng</TableCell>
+                                <TableCell colSpan={4} className="font-bold text-base">Tổng cộng năm</TableCell>
                                 <TableCell className="text-right font-bold text-base">{currencyFormatter.format(monthlyData.total)}</TableCell>
                             </TableRow>
                         </TableFooter>
