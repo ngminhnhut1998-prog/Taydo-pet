@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useLiveQuery } from "dexie-react-hooks"
@@ -7,17 +6,24 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
 } from "@/components/ui/chart"
 import { db } from "@/lib/db"
 import { getMonth, getYear, startOfMonth, endOfMonth, startOfDay, endOfDay, eachDayOfInterval, format, eachMonthOfInterval, startOfYear, endOfYear } from "date-fns"
 import { Loader2 } from "lucide-react"
 
 const chartConfig = {
-  revenue: {
-    label: "Doanh thu",
-    color: "hsl(var(--primary))",
+  recordRevenue: {
+    label: "Doanh thu Khám",
+    color: "hsl(var(--chart-1))",
   },
-}
+  petshopRevenue: {
+    label: "Doanh thu Petshop",
+    color: "hsl(var(--chart-2))",
+  },
+} satisfies ChartConfig
 
 interface RevenueChartProps {
     mode: 'daily' | 'monthly' | 'yearly';
@@ -37,14 +43,14 @@ export function RevenueChart({ mode, year, month }: RevenueChartProps) {
             const daysInMonth = eachDayOfInterval(interval);
 
             return daysInMonth.map(day => {
-                const dailyTotal = records
+                const dailyRecordTotal = records
                     .filter(r => {
                         const recordDate = new Date(r.ngay_kham);
                         return recordDate >= startOfDay(day) && recordDate <= endOfDay(day);
                     })
                     .reduce((sum, r) => sum + (r.chi_phi || 0), 0);
                 
-                return { name: format(day, 'dd'), revenue: dailyTotal };
+                return { name: format(day, 'dd'), recordRevenue: dailyRecordTotal, petshopRevenue: 0 };
             });
         }
         
@@ -68,9 +74,13 @@ export function RevenueChart({ mode, year, month }: RevenueChartProps) {
                     return getYear(saleDate) === year && getMonth(saleDate) === getMonth(monthStart);
                 });
 
-                const totalRevenue = monthlyRecordTotal + (monthlyPetshopSale?.amount || 0);
+                const petshopRevenue = monthlyPetshopSale?.amount || 0;
 
-                return { name: `T${getMonth(monthStart) + 1}`, revenue: totalRevenue };
+                return { 
+                    name: `T${getMonth(monthStart) + 1}`, 
+                    recordRevenue: monthlyRecordTotal,
+                    petshopRevenue: petshopRevenue,
+                 };
             });
         }
 
@@ -97,9 +107,11 @@ export function RevenueChart({ mode, year, month }: RevenueChartProps) {
                     .filter(s => getYear(new Date(s.date)) === y)
                     .reduce((sum, s) => sum + s.amount, 0);
 
-                const totalRevenue = yearlyRecordTotal + yearlyPetshopTotal;
-
-                return { name: y.toString(), revenue: totalRevenue };
+                return { 
+                    name: y.toString(), 
+                    recordRevenue: yearlyRecordTotal, 
+                    petshopRevenue: yearlyPetshopTotal 
+                };
             });
         }
 
@@ -117,7 +129,7 @@ export function RevenueChart({ mode, year, month }: RevenueChartProps) {
   return (
       <ChartContainer config={chartConfig} className="h-[300px] w-full">
         <ResponsiveContainer>
-            <BarChart accessibilityLayer data={data} margin={{ top: 20, right: 20, bottom: 0, left: 20}}>
+            <BarChart accessibilityLayer data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20}}>
             <CartesianGrid vertical={false} />
             <XAxis
                 dataKey="name"
@@ -140,7 +152,9 @@ export function RevenueChart({ mode, year, month }: RevenueChartProps) {
                     formatter={(value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
                 />}
             />
-            <Bar dataKey="revenue" fill="var(--color-revenue)" radius={8} />
+            <ChartLegend content={<ChartLegendContent />} />
+            <Bar dataKey="recordRevenue" fill="var(--color-recordRevenue)" stackId="a" radius={0} />
+            <Bar dataKey="petshopRevenue" fill="var(--color-petshopRevenue)" stackId="a" radius={[8, 8, 0, 0]}/>
             </BarChart>
         </ResponsiveContainer>
       </ChartContainer>
