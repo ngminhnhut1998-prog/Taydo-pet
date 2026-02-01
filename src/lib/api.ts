@@ -2,7 +2,7 @@
 import { db, type Customer, type Pet, type MedicalRecord, type PetshopSale } from './db';
 import { pb } from './pocketbase';
 
-const createApiOperations = <T extends { id: string, created?: string, updated?: string }>(collectionName: 'customers' | 'pets' | 'records' | 'petshop_sales') => {
+const createApiOperations = <T extends { id: string, created?: string, updated?: string }>(collectionName: 'customers' | 'pets' | 'records' | 'petshopSales') => {
   const table = db[collectionName];
   
   return {
@@ -34,7 +34,7 @@ const createApiOperations = <T extends { id: string, created?: string, updated?:
 export const customerApi = createApiOperations<Customer>('customers');
 export const petApi = createApiOperations<Pet>('pets');
 export const recordApi = createApiOperations<MedicalRecord>('records');
-export const petshopSaleApi = createApiOperations<PetshopSale>('petshop_sales');
+export const petshopSaleApi = createApiOperations<PetshopSale>('petshopSales');
 
 
 export async function syncAllData() {
@@ -44,7 +44,7 @@ export async function syncAllData() {
       pb.collection('customers').getFullList<Customer>({ sort: '-created' }),
       pb.collection('pets').getFullList<Pet>({ sort: '-created' }),
       pb.collection('records').getFullList<MedicalRecord>({ sort: '-created' }),
-      pb.collection('petshop_sales').getFullList<PetshopSale>({ sort: '-created' })
+      pb.collection('petshopSales').getFullList<PetshopSale>({ sort: '-created' })
     ]);
 
     await db.transaction('rw', db.customers, db.pets, db.records, db.petshopSales, async () => {
