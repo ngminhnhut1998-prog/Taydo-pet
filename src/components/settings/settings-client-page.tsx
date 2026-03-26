@@ -11,8 +11,9 @@ import { db, type Customer, type Pet, type MedicalRecord } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { exportDataToExcel } from '@/lib/excel-export';
-import { DatePicker } from '../ui/date-picker';
-import { format } from 'date-fns';
+import { format, isValid, parse } from 'date-fns';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 interface BackupData {
     customers: Customer[];
@@ -28,27 +29,40 @@ export default function SettingsClientPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isExporting, setIsExporting] = useState(false);
     
-    const [lockDate, setLockDate] = useState<Date | undefined>(undefined);
+    const [lockDateInput, setLockDateInput] = useState('');
     const [isLockConfirmOpen, setIsLockConfirmOpen] = useState(false);
 
     useEffect(() => {
-        setLockDate(lockdownDate ? new Date(lockdownDate) : undefined);
+        setLockDateInput(lockdownDate ? format(new Date(lockdownDate), 'dd/MM/yyyy') : '');
     }, [lockdownDate]);
 
 
-    const handleSaveLockdown = () => {
-        if (lockDate) {
-            setLockdownDate(lockDate.toISOString());
+    const handleAttemptLockdown = () => {
+        const parsedDate = parse(lockDateInput, 'dd/MM/yyyy', new Date());
+        if (!isValid(parsedDate) || lockDateInput.length !== 10) {
             toast({
-                title: "Đã chốt dữ liệu",
-                description: `Các bản ghi từ ngày ${format(lockDate, 'dd/MM/yyyy')} trở về trước sẽ bị khóa.`,
+                variant: 'destructive',
+                title: 'Ngày không hợp lệ',
+                description: 'Vui lòng nhập ngày theo định dạng dd/MM/yyyy.',
             });
+            return;
         }
+        setIsLockConfirmOpen(true);
+    };
+
+    const handleConfirmLockdown = () => {
+        const parsedDate = parse(lockDateInput, 'dd/MM/yyyy', new Date());
+        setLockdownDate(parsedDate.toISOString());
+        toast({
+            title: "Đã chốt dữ liệu",
+            description: `Các bản ghi từ ngày ${lockDateInput} trở về trước sẽ bị khóa.`,
+        });
+        setIsLockConfirmOpen(false);
     };
 
     const handleRemoveLockdown = () => {
         setLockdownDate(null);
-        setLockDate(undefined);
+        setLockDateInput('');
         toast({
             title: "Đã mở khóa dữ liệu",
             description: "Tất cả các bản ghi đã được mở khóa.",
@@ -198,12 +212,20 @@ export default function SettingsClientPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Chốt dữ liệu</CardTitle>
-                        <CardDescription>Chọn một mốc thời gian. Các bản ghi có ngày bằng hoặc trước mốc này sẽ bị khóa, không thể sửa hoặc xóa.</CardDescription>
+                        <CardDescription>Nhập một mốc thời gian. Các bản ghi có ngày bằng hoặc trước mốc này sẽ bị khóa, không thể sửa hoặc xóa.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <DatePicker date={lockDate} setDate={setLockDate} className="w-full" />
+                        <div className="space-y-2">
+                             <Label htmlFor="lockdown-date">Ngày chốt dữ liệu</Label>
+                             <Input 
+                                id="lockdown-date"
+                                placeholder="dd/MM/yyyy"
+                                value={lockDateInput}
+                                onChange={(e) => setLockDateInput(e.target.value)}
+                            />
+                        </div>
                         <div className="flex flex-col sm:flex-row gap-2">
-                             <Button onClick={() => setIsLockConfirmOpen(true)} className="w-full" disabled={isReadOnly || !lockDate}>
+                             <Button onClick={handleAttemptLockdown} className="w-full" disabled={isReadOnly || !lockDateInput}>
                                 <Lock className="mr-2 h-4 w-4" />
                                 Chốt dữ liệu
                             </Button>
@@ -265,13 +287,13 @@ export default function SettingsClientPage() {
                         <AlertDialogTitle>Xác nhận chốt dữ liệu?</AlertDialogTitle>
                         <AlertDialogDescription>
                             Hành động này sẽ khóa tất cả các bản ghi có ngày bằng hoặc trước 
-                            <span className='font-bold text-foreground'> {lockDate ? format(lockDate, 'dd/MM/yyyy') : ''}</span>. 
+                            <span className='font-bold text-foreground'> {lockDateInput}</span>. 
                             Bạn sẽ không thể tạo, sửa hoặc xóa các bản ghi này. Bạn có chắc chắn muốn tiếp tục?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => { handleSaveLockdown(); setIsLockConfirmOpen(false); }}>
+                        <AlertDialogAction onClick={handleConfirmLockdown}>
                             Đồng ý, chốt dữ liệu
                         </AlertDialogAction>
                     </AlertDialogFooter>
