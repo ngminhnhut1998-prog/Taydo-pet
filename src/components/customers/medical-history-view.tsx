@@ -7,7 +7,7 @@ import { db, type Pet, type MedicalRecord } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Edit, ArrowLeft, FileText, MoreVertical, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, ArrowLeft, FileText, MoreVertical, Trash2, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { RecordForm } from './record-form';
 import { Badge } from '@/components/ui/badge';
@@ -16,12 +16,13 @@ import { useSettings } from '@/contexts/settings-context';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { recordApi } from '@/lib/api';
-import { calculateAge } from '@/lib/utils';
+import { calculateAge, isDateLocked } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
 export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => void }) {
-    const { isReadOnly } = useSettings();
+    const { isReadOnly, lockdownDate } = useSettings();
     const { toast } = useToast();
     const records = useLiveQuery(
         () => db.records.where('thu_id').equals(pet.id).sortBy('ngay_kham').then(r => r.reverse()),
@@ -33,9 +34,31 @@ export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => vo
 
     const openRecordForm = (record?: MedicalRecord) => {
         if (isReadOnly) return;
+        const isLocked = record && isDateLocked(record.ngay_kham, lockdownDate);
+        if (isLocked) {
+             toast({
+                variant: 'destructive',
+                title: 'Bản ghi đã bị khóa',
+                description: 'Không thể sửa các bản ghi trong giai đoạn đã chốt dữ liệu.',
+            });
+            return;
+        }
         setSelectedRecord(record);
         setIsRecordFormOpen(true);
     };
+
+    const attemptDeleteRecord = (record: MedicalRecord) => {
+         const isLocked = isDateLocked(record.ngay_kham, lockdownDate);
+         if (isLocked) {
+              toast({
+                variant: 'destructive',
+                title: 'Bản ghi đã bị khóa',
+                description: 'Không thể xóa các bản ghi trong giai đoạn đã chốt dữ liệu.',
+            });
+            return;
+         }
+         setRecordToDelete(record);
+    }
 
     const handleDeleteRecord = async () => {
         if (!recordToDelete) return;
@@ -118,13 +141,27 @@ export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => vo
                                     <TableHead>Ghi chú</TableHead>
                                     <TableHead>Nhắc hẹn</TableHead>
                                     <TableHead>Chi phí</TableHead>
-                                    {!isReadOnly && <TableHead><span className="sr-only">Actions</span></TableHead>}
+                                    {!isReadOnly && <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {records.map(record => (
-                                    <TableRow key={record.id}>
-                                        <TableCell className="font-bold text-foreground">{format(new Date(record.ngay_kham), 'dd/MM/yyyy')}</TableCell>
+                                {records.map(record => {
+                                    const isLocked = isDateLocked(record.ngay_kham, lockdownDate);
+                                    return (
+                                    <TableRow key={record.id} className={isLocked ? 'bg-muted/30' : ''}>
+                                        <TableCell className="font-bold text-foreground">
+                                            <div className="flex items-center gap-2">
+                                                <span>{format(new Date(record.ngay_kham), 'dd/MM/yyyy')}</span>
+                                                {isLocked && (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger><Lock className="h-3 w-3 text-muted-foreground" /></TooltipTrigger>
+                                                            <TooltipContent><p>Đã chốt dữ liệu</p></TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                )}
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="font-bold text-foreground">{record.can_nang_kham ?? 'N/A'}</TableCell>
                                         <TableCell className="font-bold text-foreground max-w-xs whitespace-pre-wrap">{record.trieu_chung}</TableCell>
                                         <TableCell className="font-bold text-foreground whitespace-pre-wrap">{record.chan_doan}</TableCell>
@@ -148,17 +185,17 @@ export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => vo
                                             <TableCell>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                                        <Button variant="ghost" className="h-8 w-8 p-0" disabled={isLocked}>
                                                             <span className="sr-only">Mở menu</span>
                                                             <MoreVertical className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => openRecordForm(record)}>
+                                                        <DropdownMenuItem onClick={() => openRecordForm(record)} disabled={isLocked}>
                                                             <Edit className="mr-2 h-4 w-4" />
                                                             Sửa bệnh án
                                                         </DropdownMenuItem>
-                                                         <DropdownMenuItem onClick={() => setRecordToDelete(record)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                         <DropdownMenuItem onClick={() => attemptDeleteRecord(record)} className="text-destructive focus:bg-destructive/10 focus:text-destructive" disabled={isLocked}>
                                                             <Trash2 className="mr-2 h-4 w-4" />
                                                             Xóa bệnh án
                                                         </DropdownMenuItem>
@@ -167,7 +204,7 @@ export function MedicalHistoryView({ pet, onBack }: { pet: Pet; onBack: () => vo
                                             </TableCell>
                                         )}
                                     </TableRow>
-                                ))}
+                                )})}
                             </TableBody>
                         </Table>
                     ) : (

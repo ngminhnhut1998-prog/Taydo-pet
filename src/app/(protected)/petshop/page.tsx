@@ -13,9 +13,12 @@ import { Label } from '@/components/ui/label';
 import { ReportFilters } from '@/components/reports/report-filters';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save } from 'lucide-react';
+import { useSettings } from '@/contexts/settings-context';
+import { isDateLocked } from '@/lib/utils';
 
 export default function PetshopPage() {
     const { toast } = useToast();
+    const { isReadOnly, lockdownDate } = useSettings();
     const today = new Date();
     const [filter, setFilter] = useState({ month: today.getMonth(), year: today.getFullYear() });
     const [amount, setAmount] = useState<number | string>('');
@@ -56,13 +59,25 @@ export default function PetshopPage() {
             return;
         }
 
-        const saleDate = startOfMonth(new Date(filter.year, filter.month)).toISOString();
+        const saleDate = startOfMonth(new Date(filter.year, filter.month));
+
+        if (isDateLocked(saleDate, lockdownDate)) {
+            toast({
+                variant: "destructive",
+                title: "Giai đoạn đã bị khóa",
+                description: "Không thể tạo hoặc cập nhật doanh thu trong giai đoạn đã chốt dữ liệu.",
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        const saleDateISO = saleDate.toISOString();
 
         try {
             if (existingSale) {
                 // Update existing record
                 if (existingSale.amount !== saleAmount) {
-                     await petshopSaleApi.update(existingSale.id, { amount: saleAmount, date: saleDate });
+                     await petshopSaleApi.update(existingSale.id, { amount: saleAmount, date: saleDateISO });
                      toast({ title: "Thành công", description: "Đã cập nhật doanh thu Petshop." });
                 } else {
                      toast({ title: "Không có thay đổi", description: "Doanh thu không thay đổi." });
@@ -70,7 +85,7 @@ export default function PetshopPage() {
             } else {
                 // Create new record
                  if (saleAmount > 0) {
-                    await petshopSaleApi.create({ date: saleDate, amount: saleAmount });
+                    await petshopSaleApi.create({ date: saleDateISO, amount: saleAmount });
                     toast({ title: "Thành công", description: "Đã lưu doanh thu Petshop." });
                  } else {
                     toast({ title: "Không có gì để lưu", description: "Vui lòng nhập doanh thu lớn hơn 0." });
@@ -121,6 +136,7 @@ export default function PetshopPage() {
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
                                 className="text-2xl h-14 pr-24 font-bold"
+                                disabled={isReadOnly}
                             />
                              <span className='absolute right-4 top-1/2 -translate-y-1/2 text-lg text-muted-foreground'>{currencyFormatter.format(Number(amount) || 0)}</span>
                         </div>
@@ -129,7 +145,7 @@ export default function PetshopPage() {
                         </p>
                     </div>
 
-                    <Button onClick={handleSave} disabled={isSubmitting} className="w-full" size="lg">
+                    <Button onClick={handleSave} disabled={isSubmitting || isReadOnly} className="w-full" size="lg">
                         {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
                         Lưu doanh thu
                     </Button>

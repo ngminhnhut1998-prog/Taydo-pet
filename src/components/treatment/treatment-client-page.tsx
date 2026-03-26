@@ -20,6 +20,7 @@ import { Calendar } from '../ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { isDateLocked } from '@/lib/utils';
 
 const initialData = {
     newCustomerData: { ten: '', so_dien_thoai: '', so_dien_thoai_2: '', dia_chi: '' },
@@ -41,7 +42,7 @@ const initialData = {
 };
 
 export default function TreatmentClientPage() {
-    const { isReadOnly } = useSettings();
+    const { isReadOnly, lockdownDate } = useSettings();
     const { toast } = useToast();
     const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
@@ -176,6 +177,11 @@ export default function TreatmentClientPage() {
         setIsSubmitting(true);
 
         try {
+            const examDate = parse(recordData.ngay_kham, 'dd/MM/yyyy', new Date());
+            if (isDateLocked(examDate, lockdownDate)) {
+                throw new Error('Không thể tạo bản ghi trong giai đoạn đã chốt dữ liệu.');
+            }
+
             let customerId: string;
             // 1. Create or get customer
             if (customerStatus === 'new') {
@@ -219,15 +225,14 @@ export default function TreatmentClientPage() {
             }
 
             // 3. Create medical record
-            const parsedNgayKham = parse(recordData.ngay_kham, 'dd/MM/yyyy', new Date());
-            if (!isValid(parsedNgayKham)) {
+            if (!isValid(examDate)) {
                 throw new Error('Ngày khám không hợp lệ. Vui lòng dùng định dạng dd/MM/yyyy.');
             }
 
             await recordApi.create({
                 ...recordData,
                 thu_id: petId,
-                ngay_kham: parsedNgayKham.toISOString(),
+                ngay_kham: examDate.toISOString(),
                 nhac_hen: (recordData.nhac_hen || [])
                     .filter(h => h.ngay && h.noi_dung)
                     .map(h => {

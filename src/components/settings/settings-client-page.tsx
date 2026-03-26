@@ -1,15 +1,18 @@
+
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSettings } from '@/contexts/settings-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, ShieldCheck, ShieldOff, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { Download, Upload, ShieldCheck, ShieldOff, FileSpreadsheet, Loader2, Lock, Unlock } from 'lucide-react';
 import { db, type Customer, type Pet, type MedicalRecord } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { exportDataToExcel } from '@/lib/excel-export';
+import { DatePicker } from '../ui/date-picker';
+import { format } from 'date-fns';
 
 interface BackupData {
     customers: Customer[];
@@ -18,12 +21,39 @@ interface BackupData {
 }
 
 export default function SettingsClientPage() {
-    const { isReadOnly, toggleReadOnly } = useSettings();
+    const { isReadOnly, toggleReadOnly, lockdownDate, setLockdownDate } = useSettings();
     const { toast } = useToast();
     const [isRestoreConfirmOpen, setIsRestoreConfirmOpen] = useState(false);
     const [restorableData, setRestorableData] = useState<BackupData | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isExporting, setIsExporting] = useState(false);
+    
+    const [lockDate, setLockDate] = useState<Date | undefined>(undefined);
+    const [isLockConfirmOpen, setIsLockConfirmOpen] = useState(false);
+
+    useEffect(() => {
+        setLockDate(lockdownDate ? new Date(lockdownDate) : undefined);
+    }, [lockdownDate]);
+
+
+    const handleSaveLockdown = () => {
+        if (lockDate) {
+            setLockdownDate(lockDate.toISOString());
+            toast({
+                title: "Đã chốt dữ liệu",
+                description: `Các bản ghi từ ngày ${format(lockDate, 'dd/MM/yyyy')} trở về trước sẽ bị khóa.`,
+            });
+        }
+    };
+
+    const handleRemoveLockdown = () => {
+        setLockdownDate(null);
+        setLockDate(undefined);
+        toast({
+            title: "Đã mở khóa dữ liệu",
+            description: "Tất cả các bản ghi đã được mở khóa.",
+        });
+    };
 
     const handleBackup = async () => {
         try {
@@ -164,14 +194,39 @@ export default function SettingsClientPage() {
                         </div>
                     </CardContent>
                 </Card>
+                
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Chốt dữ liệu</CardTitle>
+                        <CardDescription>Chọn một mốc thời gian. Các bản ghi có ngày bằng hoặc trước mốc này sẽ bị khóa, không thể sửa hoặc xóa.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <DatePicker date={lockDate} setDate={setLockDate} className="w-full" />
+                        <div className="flex flex-col sm:flex-row gap-2">
+                             <Button onClick={() => setIsLockConfirmOpen(true)} className="w-full" disabled={isReadOnly || !lockDate}>
+                                <Lock className="mr-2 h-4 w-4" />
+                                Chốt dữ liệu
+                            </Button>
+                            <Button variant="outline" className="w-full" onClick={handleRemoveLockdown} disabled={isReadOnly || !lockdownDate}>
+                                <Unlock className="mr-2 h-4 w-4" />
+                                Mở khóa
+                            </Button>
+                        </div>
+                         {lockdownDate && (
+                            <p className="text-sm text-center text-muted-foreground pt-2">
+                                Dữ liệu đang bị khóa từ ngày <strong>{format(new Date(lockdownDate), 'dd/MM/yyyy')}</strong> trở về trước.
+                            </p>
+                        )}
+                    </CardContent>
+                </Card>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Sao lưu & Phục hồi JSON</CardTitle>
-                        <CardDescription>Tạo bản sao lưu toàn bộ dữ liệu hoặc phục hồi từ một tệp sao lưu JSON. Thao tác phục hồi sẽ xóa toàn bộ dữ liệu hiện tại.</CardDescription>
+                        <CardTitle>Sao lưu & Phục hồi</CardTitle>
+                        <CardDescription>Tạo bản sao lưu dữ liệu hoặc phục hồi từ tệp. Có 2 định dạng: JSON (toàn bộ) và Excel (chỉ bệnh án).</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <Button onClick={handleBackup} className="w-full" disabled={isReadOnly}>
+                         <Button onClick={handleBackup} className="w-full" disabled={isReadOnly}>
                             <Download className="mr-2 h-4 w-4" />
                             Sao lưu dữ liệu (JSON)
                         </Button>
@@ -186,16 +241,8 @@ export default function SettingsClientPage() {
                             accept=".json"
                             className="hidden"
                         />
-                    </CardContent>
-                </Card>
-
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Xuất Dữ Liệu Excel</CardTitle>
-                        <CardDescription>Xuất toàn bộ dữ liệu khám bệnh ra file Excel. Dữ liệu được cấu trúc phẳng để dễ dàng phân tích và tạo báo cáo Pivot.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button onClick={handleExportExcel} className="w-full" disabled={isReadOnly || isExporting}>
+                         <hr/>
+                         <Button onClick={handleExportExcel} className="w-full" variant="secondary" disabled={isReadOnly || isExporting}>
                             {isExporting ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -211,6 +258,25 @@ export default function SettingsClientPage() {
                     </CardContent>
                 </Card>
             </div>
+            
+            <AlertDialog open={isLockConfirmOpen} onOpenChange={setIsLockConfirmOpen}>
+                 <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Xác nhận chốt dữ liệu?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Hành động này sẽ khóa tất cả các bản ghi có ngày bằng hoặc trước 
+                            <span className='font-bold text-foreground'> {lockDate ? format(lockDate, 'dd/MM/yyyy') : ''}</span>. 
+                            Bạn sẽ không thể tạo, sửa hoặc xóa các bản ghi này. Bạn có chắc chắn muốn tiếp tục?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => { handleSaveLockdown(); setIsLockConfirmOpen(false); }}>
+                            Đồng ý, chốt dữ liệu
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <AlertDialog open={isRestoreConfirmOpen} onOpenChange={setIsRestoreConfirmOpen}>
                 <AlertDialogContent>

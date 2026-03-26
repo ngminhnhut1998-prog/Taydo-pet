@@ -16,6 +16,7 @@ import { type MedicalRecord } from '@/lib/db';
 import { useEffect } from 'react';
 import { Input } from '../ui/input';
 import { useSettings } from '@/contexts/settings-context';
+import { isDateLocked } from '@/lib/utils';
 
 const appointmentSchema = z.object({
   ngay: z.string().refine((val) => {
@@ -57,7 +58,7 @@ interface RecordFormProps {
 }
 
 export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordFormProps) {
-  const { isReadOnly } = useSettings();
+  const { isReadOnly, lockdownDate } = useSettings();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -132,11 +133,30 @@ export function RecordForm({ isOpen, setIsOpen, petId, existingRecord }: RecordF
   }, [existingRecord, form, isOpen]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const parsedDate = parse(values.ngay_kham, 'dd/MM/yyyy', new Date());
+    const examDate = parse(values.ngay_kham, 'dd/MM/yyyy', new Date());
+
+    if (isDateLocked(examDate, lockdownDate)) {
+        toast({
+            variant: 'destructive',
+            title: 'Ngày khám đã bị khóa',
+            description: 'Không thể tạo hoặc sửa bản ghi trong giai đoạn đã chốt dữ liệu.',
+        });
+        return;
+    }
+
+    // Also check original date if editing
+    if (existingRecord && isDateLocked(existingRecord.ngay_kham, lockdownDate)) {
+         toast({
+            variant: 'destructive',
+            title: 'Bản ghi đã bị khóa',
+            description: 'Không thể sửa các bản ghi trong giai đoạn đã chốt dữ liệu.',
+        });
+        return;
+    }
 
     const dataToSave = {
         ...values,
-        ngay_kham: parsedDate.toISOString(),
+        ngay_kham: examDate.toISOString(),
         nhac_hen: (values.nhac_hen || []).filter(h => h.ngay && h.noi_dung).map(h => ({
           ...h,
           ngay: startOfDay(parse(h.ngay, 'dd/MM/yyyy', new Date())).toISOString()
