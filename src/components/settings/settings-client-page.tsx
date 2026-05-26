@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Download, Upload, ShieldCheck, ShieldOff, FileSpreadsheet, Loader2, Lock, Unlock } from 'lucide-react';
 import { db, type Customer, type Pet, type MedicalRecord, type PetshopSale } from '@/lib/db';
+import { pb } from '@/lib/pocketbase';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { exportDataToExcel } from '@/lib/excel-export';
@@ -138,6 +139,7 @@ export default function SettingsClientPage() {
     const handleRestoreConfirm = async () => {
         if (!restorableData) return;
         try {
+            // Bước 1: Ghi vào IndexedDB (kho dưới máy)
             await db.transaction('rw', db.customers, db.pets, db.records, db.petshopSales, async () => {
                 await db.records.clear();
                 await db.pets.clear();
@@ -148,19 +150,50 @@ export default function SettingsClientPage() {
                 await db.records.bulkPut(restorableData.records);
                 await db.petshopSales.bulkPut(restorableData.petshopSales ?? []);
             });
-            // Báo cho AppLayout biết: bỏ qua syncAllData() lần reload này
-            // để tránh PocketBase ghi đè mất data vừa restore
-            sessionStorage.setItem('skipNextSync', 'true');
+
+            toast({
+                title: "Đang phục hồi lên máy chủ...",
+                description: "Vui lòng chờ, đang ghi dữ liệu lên PocketBase.",
+            });
+
+            // Bước 2: Xóa toàn bộ dữ liệu cũ trên PocketBase
+            const [oldCustomers, oldPets, oldRecords, oldSales] = await Promise.all([
+                pb.collection('customers').getFullList(),
+                pb.collection('pets').getFullList(),
+                pb.collection('records').getFullList(),
+                pb.collection('petshopSales').getFullList(),
+            ]);
+            await Promise.all([
+                ...oldCustomers.map((r: any) => pb.collection('customers').delete(r.id)),
+                ...oldPets.map((r: any) => pb.collection('pets').delete(r.id)),
+                ...oldRecords.map((r: any) => pb.collection('records').delete(r.id)),
+                ...oldSales.map((r: any) => pb.collection('petshopSales').delete(r.id)),
+            ]);
+
+            // Bước 3: Tạo lại toàn bộ dữ liệu từ backup lên PocketBase
+            for (const c of restorableData.customers) {
+                await pb.collection('customers').create(c);
+            }
+            for (const p of restorableData.pets) {
+                await pb.collection('pets').create(p);
+            }
+            for (const r of restorableData.records) {
+                await pb.collection('records').create(r);
+            }
+            for (const s of (restorableData.petshopSales ?? [])) {
+                await pb.collection('petshopSales').create(s);
+            }
+
             toast({
                 title: "Phục hồi thành công!",
-                description: "Dữ liệu của bạn đã được khôi phục. Trang sẽ được tải lại.",
+                description: "Dữ liệu đã được khôi phục hoàn toàn. Trang sẽ được tải lại.",
             });
             setTimeout(() => window.location.reload(), 2000);
         } catch (error: any) {
             console.error(error);
             toast({
                 title: "Lỗi phục hồi dữ liệu",
-                description: error.message || "Không thể ghi dữ liệu từ tệp sao lưu.",
+                description: error.message || "Không thể ghi dữ liệu từ tệp sao lưu. Vui lòng kiểm tra kết nối và thử lại.",
                 variant: 'destructive'
             });
         } finally {
