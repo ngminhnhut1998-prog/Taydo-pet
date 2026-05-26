@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Download, Upload, ShieldCheck, ShieldOff, FileSpreadsheet, Loader2, Lock, Unlock } from 'lucide-react';
-import { db, type Customer, type Pet, type MedicalRecord } from '@/lib/db';
+import { db, type Customer, type Pet, type MedicalRecord, type PetshopSale } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { exportDataToExcel } from '@/lib/excel-export';
@@ -19,6 +19,7 @@ interface BackupData {
     customers: Customer[];
     pets: Pet[];
     records: MedicalRecord[];
+    petshopSales: PetshopSale[];
 }
 
 export default function SettingsClientPage() {
@@ -74,8 +75,9 @@ export default function SettingsClientPage() {
             const customers = await db.customers.toArray();
             const pets = await db.pets.toArray();
             const records = await db.records.toArray();
+            const petshopSales = await db.petshopSales.toArray();
 
-            const backupData = JSON.stringify({ customers, pets, records }, null, 2);
+            const backupData = JSON.stringify({ customers, pets, records, petshopSales }, null, 2);
             const blob = new Blob([backupData], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -113,6 +115,10 @@ export default function SettingsClientPage() {
                 if (!Array.isArray(data.customers) || !Array.isArray(data.pets) || !Array.isArray(data.records)) {
                     throw new Error("Tệp sao lưu không đúng định dạng.");
                 }
+                // Tương thích ngược với file backup cũ chưa có petshopSales
+                if (!Array.isArray(data.petshopSales)) {
+                    data.petshopSales = [];
+                }
                 setRestorableData(data);
                 setIsRestoreConfirmOpen(true);
             } catch (err: any) {
@@ -132,14 +138,19 @@ export default function SettingsClientPage() {
     const handleRestoreConfirm = async () => {
         if (!restorableData) return;
         try {
-            await db.transaction('rw', db.customers, db.pets, db.records, async () => {
+            await db.transaction('rw', db.customers, db.pets, db.records, db.petshopSales, async () => {
                 await db.records.clear();
                 await db.pets.clear();
                 await db.customers.clear();
-                await db.customers.bulkAdd(restorableData.customers);
-                await db.pets.bulkAdd(restorableData.pets);
-                await db.records.bulkAdd(restorableData.records);
+                await db.petshopSales.clear();
+                await db.customers.bulkPut(restorableData.customers);
+                await db.pets.bulkPut(restorableData.pets);
+                await db.records.bulkPut(restorableData.records);
+                await db.petshopSales.bulkPut(restorableData.petshopSales ?? []);
             });
+            // Báo cho AppLayout biết: bỏ qua syncAllData() lần reload này
+            // để tránh PocketBase ghi đè mất data vừa restore
+            sessionStorage.setItem('skipNextSync', 'true');
             toast({
                 title: "Phục hồi thành công!",
                 description: "Dữ liệu của bạn đã được khôi phục. Trang sẽ được tải lại.",
