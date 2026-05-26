@@ -81,7 +81,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Sync data on initial load
   React.useEffect(() => {
-    if (user) { // Only sync if user is logged in
+    if (user) {
+      // Nếu vừa restore từ file backup, bỏ qua sync lần này
+      // để tránh PocketBase ghi đè mất data vừa restore vào IndexedDB
+      const shouldSkip = sessionStorage.getItem('skipNextSync');
+      if (shouldSkip) {
+        sessionStorage.removeItem('skipNextSync');
+        console.log('[Sync] Bỏ qua đồng bộ sau khi phục hồi dữ liệu.');
+        return;
+      }
       handleSync();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
