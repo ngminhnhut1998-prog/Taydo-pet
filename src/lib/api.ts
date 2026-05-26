@@ -1,4 +1,3 @@
-
 import { db, type Customer, type Pet, type MedicalRecord, type PetshopSale } from './db';
 import { pb } from './pocketbase';
 
@@ -36,8 +35,43 @@ export const petApi = createApiOperations<Pet>('pets');
 export const recordApi = createApiOperations<MedicalRecord>('records');
 export const petshopSaleApi = createApiOperations<PetshopSale>('petshopSales');
 
+// --- ĐOẠN TAO THÊM MỚI VÀO ĐÂY ---
+async function pushLocalToCloud() {
+  console.log("⚡ Đang đẩy dữ liệu từ máy lên Cloud để giữ bản Restore...");
+  const collections = ['customers', 'pets', 'records', 'petshopSales'] as const;
+
+  for (const col of collections) {
+    const localData = await db[col].toArray();
+    // Đẩy từng bản ghi lên PocketBase
+    await Promise.all(localData.map(async (item: any) => {
+      try {
+        await pb.collection(col).update(item.id, item);
+      } catch (err: any) {
+        if (err.status === 404) {
+          await pb.collection(col).create(item);
+        }
+      }
+    }));
+  }
+}
+// --------------------------------
 
 export async function syncAllData() {
+  // --- ĐOẠN SỬA LOGIC Ở ĐÂY ---
+  const isJustRestored = typeof window !== 'undefined' && localStorage.getItem('JUST_RESTORED');
+
+  if (isJustRestored) {
+    try {
+      await pushLocalToCloud();
+      localStorage.removeItem('JUST_RESTORED');
+      console.log("✅ Restore & Sync thành công!");
+      return; // Dừng lại ở đây, không chạy xuống phần clear DB bên dưới nữa
+    } catch (error) {
+      console.error("Lỗi khi đẩy data sau restore:", error);
+    }
+  }
+  // ----------------------------
+
   console.log('Starting full data sync from PocketBase to local Dexie DB...');
   try {
     const [customers, pets, records, petshopSales] = await Promise.all([
@@ -48,13 +82,11 @@ export async function syncAllData() {
     ]);
 
     await db.transaction('rw', db.customers, db.pets, db.records, db.petshopSales, async () => {
-        // Clear existing local data before syncing
         await db.records.clear();
         await db.pets.clear();
         await db.customers.clear();
         await db.petshopSales.clear();
         
-        // Bulk add new data from PocketBase
         await db.customers.bulkAdd(customers);
         await db.pets.bulkAdd(pets);
         await db.records.bulkAdd(records);
@@ -64,11 +96,10 @@ export async function syncAllData() {
     console.log(`Sync complete: ${customers.length} customers, ${pets.length} pets, ${records.length} records, ${petshopSales.length} petshop sales synced.`);
   } catch (error) {
     console.error("Full data sync from PocketBase failed:", error);
-    throw error; // Re-throw to be caught by the caller
+    throw error;
   }
 }
 
-// This function is no longer needed as we perform direct API calls now.
 export async function processSyncQueue() {
    console.log('Sync queue processing is disabled in favor of direct API calls with local DB sync.');
   return Promise.resolve();
